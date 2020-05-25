@@ -97,7 +97,7 @@ void TrackingNetworkManager::listenerBool(bool & _bool){
 
 
 //--------------------------------------------------------------
-void TrackingNetworkManager::update(BlobFinder & _blobFinder, Frustum & _frustum, ofMatrix4x4 _trans){
+void TrackingNetworkManager::update(SkeletonFinder & _blobFinder, Frustum & _frustum, ofMatrix4x4 _trans){
     frameNumber++;
     
     long currentMillis = ofGetElapsedTimeMillis();
@@ -164,7 +164,9 @@ void TrackingNetworkManager::update(BlobFinder & _blobFinder, Frustum & _frustum
 	}
 }
 
-void TrackingNetworkManager::sendTrackingData(BlobFinder & _blobFinder){
+void TrackingNetworkManager::sendTrackingData(SkeletonFinder & _blobFinder){
+    return;
+    /*
     // send frame number
     ofxOscMessage frame;
     frame.setAddress("/ks/server/track/frame/start");
@@ -243,6 +245,7 @@ void TrackingNetworkManager::sendTrackingData(BlobFinder & _blobFinder){
 	framedone.addIntArg(mServerID.get());
 	framedone.addIntArg(frameNumber);
 	sendMessageToTrackingClients(framedone);
+    */
 }
 
 void TrackingNetworkManager::sendCalibFrustum(Frustum & _frustum, string _ip, int _port){
@@ -285,7 +288,9 @@ void TrackingNetworkManager::sendCalibTrans(ofMatrix4x4 & _trans, string _ip, in
     broadcastSender.sendMessage(trans);
 }
 
-void TrackingNetworkManager::sendCalibSensorBox(BlobFinder & _blobFinder, string _ip, int _port){
+void TrackingNetworkManager::sendCalibSensorBox(SkeletonFinder & _blobFinder, string _ip, int _port){
+    return;
+    /*
     ofxOscMessage sensorbox;
     sensorbox.setAddress("/ks/server/calib/sensorbox");
     sensorbox.addIntArg(mServerID.get());
@@ -298,9 +303,11 @@ void TrackingNetworkManager::sendCalibSensorBox(BlobFinder & _blobFinder, string
     
     broadcastSender.setup(_ip, _port);
     broadcastSender.sendMessage(sensorbox);
+    */
 }
 
-void TrackingNetworkManager::sendGazePoint(BlobFinder & _blobFinder, string _ip, int _port){
+void TrackingNetworkManager::sendGazePoint(SkeletonFinder & _blobFinder, string _ip, int _port){
+    return;/*
     ofxOscMessage sensorbox;
     sensorbox.setAddress("/ks/server/calib/gazepoint");
     sensorbox.addIntArg(mServerID.get());
@@ -310,6 +317,7 @@ void TrackingNetworkManager::sendGazePoint(BlobFinder & _blobFinder, string _ip,
     
     broadcastSender.setup(_ip, _port);
     broadcastSender.sendMessage(sensorbox);
+    */
 }
 
 void TrackingNetworkManager::sendMessageToTrackingClients(ofxOscMessage _msg){

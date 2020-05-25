@@ -3,7 +3,7 @@
 #include "ofMain.h"
 #include "ofxNetwork.h"
 #include "ofxGuiExtended.h"
-#include "BlobFinder.h"
+#include "SkeletonFinder.h"
 #include "Planef.h"
 #include "Linef.h"
 #include "Grid.h"
@@ -39,6 +39,8 @@ using namespace ofxRealSenseTwo;
 class ofApp : public ofBaseApp{
 
 	public:
+        //ofApp() {}
+
 		void setup();
 		void update();
 		void draw();
@@ -133,7 +135,7 @@ class ofApp : public ofBaseApp{
     //COLOR CONTOUR//
     /////////////////
     
-    BlobFinder blobFinder;
+    SkeletonFinder skeletonFinder;
             
     // used for viewing the point cloud
     ofEasyCam previewCam;

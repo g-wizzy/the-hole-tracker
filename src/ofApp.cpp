@@ -23,6 +23,7 @@ void ofApp::setup(){
 
 	ofSetLogLevel(OF_LOG_VERBOSE);
 
+	// crashes here
 	realSense = RSDevice::createUniquePtr();
 
 	realSense->checkConnectedDialog();
@@ -68,7 +69,7 @@ void ofApp::setup(){
 	////////////////////
 	ofLog(OF_LOG_NOTICE, "MainAPP: setting up blobfinder");
 
-	blobFinder.setup(gui);
+	skeletonFinder.setup(&deviceTransform, gui);
 
 	/////////////////////////////
 	//   REALSENSE GUI   SETUP //
@@ -266,7 +267,7 @@ void ofApp::setupViewports(){
 	device->setWidth(MENU_WIDTH / 4);
 	post->setWidth(MENU_WIDTH / 4);
 	setupCalib->setWidth(MENU_WIDTH / 4);
-	blobFinder.panel->setWidth(MENU_WIDTH / 4);
+	skeletonFinder.panel->setWidth(MENU_WIDTH / 4);
 	networkMng.panel->setWidth(MENU_WIDTH / 4);
 	operating->setWidth(MENU_WIDTH / 4);
 
@@ -274,7 +275,7 @@ void ofApp::setupViewports(){
 	post->setPosition(ofGetWidth() - MENU_WIDTH, 400);
 	operating->setPosition(ofGetWidth() - MENU_WIDTH, 800);
 	setupCalib->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 3, 20);
-	blobFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 2, 20);
+	skeletonFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 2, 20);
 	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4, 20);
     //ofLog(OF_LOG_NOTICE, "ofGetWidth()" + ofToString(ofGetWidth()));
 
@@ -382,6 +383,8 @@ void ofApp::updateCalc(){
 
 	// translation vector to new coordinate system
 	glm::vec3 translate = glm::vec3(planePoint_Z);
+
+	// TODO: redo this in order to coincide with unreal engine or unity's coordinate syste
 
 	glm::vec3 newXAxis = glm::normalize(glm::vec3(planePoint_X - planePoint_Z));
 	glm::vec3 newYAxis = glm::normalize(glm::vec3(planePoint_Y - planePoint_Z));
@@ -529,25 +532,25 @@ void ofApp::update(){
         }
 
 		if (bUpdateImageMask) {
-			blobFinder.captureMaskBegin();
+			//skeletonFinder.captureMaskBegin();
 			drawCapturePointCloud(true);
-			blobFinder.captureMaskEnd();
+			//skeletonFinder.captureMaskEnd();
 		}
 		else {
 			//////////////////////////////////
 			// Cature captureCloud to FBO
 			//////////////////////////////////
 
-			blobFinder.captureBegin();
+			//skeletonFinder.captureBegin();
 			drawCapturePointCloud(false);
-			blobFinder.captureEnd();
+			//skeletonFinder.captureEnd();
 
 			//////////////////////////////////
 			// BlobFinding on the captured FBO
 			/////////////////////////////////////
-			blobFinder.update();
+			//skeletonFinder.update();
 
-			networkMng.update(blobFinder, realSenseFrustum, transformation.get());
+			networkMng.update(skeletonFinder, realSenseFrustum, transformation.get());
 		}
     
 	}
@@ -564,9 +567,9 @@ void ofApp::draw(){
 		realSense->drawDepthStream(viewGrid[0]);
 		realSense->drawInfraLeftStream(viewGrid[1]);
 
-        blobFinder.grayImage.draw(viewGrid[2]);
-        blobFinder.contourFinder.draw(viewGrid[3]);
-        blobFinder.maskFbo.draw(viewGrid[4]);
+        //skeletonFinder.grayImage.draw(viewGrid[2]);
+        //skeletonFinder.contourFinder.draw(viewGrid[3]);
+        //skeletonFinder.maskFbo.draw(viewGrid[4]);
 
         
         switch (iMainCamera) {
@@ -579,27 +582,27 @@ void ofApp::draw(){
                 drawCalibrationPoints();
                 break;
             case 2:
-                blobFinder.grayImage.draw(viewMain);
+                //skeletonFinder.grayImage.draw(viewMain);
 				ofSetColor(255, 0, 0, 255);
-				blobFinder.contourFinder.draw(viewMain);
+				//skeletonFinder.contourFinder.draw(viewMain);
 				
 				break;
             case 3:
-				blobFinder.fbo.draw(viewMain);
+				//skeletonFinder.fbo.draw(viewMain);
 				ofSetColor(255, 0, 0, 255);
-				blobFinder.contourFinder.draw(viewMain);
+				//skeletonFinder.contourFinder.draw(viewMain);
 
                 ofNoFill();
                 ofSetColor(255, 0, 255, 255);
-                blobFinder.drawBodyBlobs2d(viewMain);
+                //skeletonFinder.drawBodyBlobs2d(viewMain);
                 
                break;
             case 4:
-				blobFinder.maskFbo.draw(viewMain);
+				//skeletonFinder.maskFbo.draw(viewMain);
 
                 ofNoFill();
                 ofSetColor(255, 0, 255, 255);
-                blobFinder.drawBodyBlobs2d(viewMain);
+                //skeletonFinder.drawBodyBlobs2d(viewMain);
                 break;
             case 5:
                 previewCam.begin(viewMain);
@@ -628,11 +631,11 @@ void ofApp::draw(){
         ofDrawRectangle(viewGrid[iMainCamera]);
     } else {
 
-        blobFinder.contourEyeFinder.draw(viewMain);
+        //skeletonFinder.contourEyeFinder.draw(viewMain);
 
         ofNoFill();
         ofSetColor(255, 0, 255, 255);
-        blobFinder.drawBodyBlobs2d(viewMain);
+        //skeletonFinder.drawBodyBlobs2d(viewMain);
     }
 
     //--
@@ -685,16 +688,17 @@ void ofApp::drawPreview() {
 	ofPushMatrix();
 
     ofSetColor(255, 255, 0);
-    blobFinder.drawSensorBox();
+    skeletonFinder.drawSensorBox();
 
     ofNoFill();
     ofSetColor(255, 100, 255);
-    blobFinder.drawBodyBlobsBox();
-    blobFinder.drawBodyBlobsHeadTop();
+	skeletonFinder.drawSkeletons();
+    //skeletonFinder.drawBodyBlobsBox();
+    //skeletonFinder.drawBodyBlobsHeadTop();
 
     ofFill();
     ofSetColor(255, 100, 100);
-    blobFinder.drawGazePoint();
+    //skeletonFinder.drawGazePoint();
 
     
 	glDisable(GL_DEPTH_TEST);
@@ -707,8 +711,8 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 
 	shader.begin();
 
-	float lowerLimit = blobFinder.sensorBoxBottom.get() / 1000.f;
-	float upperLimit = blobFinder.sensorBoxTop.get() / 1000.f;
+	float lowerLimit = skeletonFinder.sensorBoxBottom.get() / 1000.f;
+	float upperLimit = skeletonFinder.sensorBoxTop.get() / 1000.f;
 
 	if (_mask) {
 		//ofClear(255, 255, 255, 255);
@@ -796,7 +800,7 @@ void ofApp::keyPressed(int key){
             break;
             
 		case 'c':
-			blobFinder.clearMask();
+			//skeletonFinder.clearMask();
 			break;
 			
 		case 't':
@@ -813,8 +817,8 @@ void ofApp::keyPressed(int key){
  
         case 's':
             setupCalib->saveToFile("settings.xml");
-            blobFinder.panel->saveToFile("trackings.xml");
-			blobFinder.saveMask();
+            skeletonFinder.panel->saveToFile("trackings.xml");
+			//skeletonFinder.saveMask();
 			networkMng.panel->saveToFile("broadcast.xml");
 			post->saveToFile("postprocessing.xml");
 			device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
@@ -823,8 +827,8 @@ void ofApp::keyPressed(int key){
 
         case 'l':
             setupCalib->loadFromFile("settings.xml");
-            blobFinder.panel->loadFromFile("trackings.xml");
-			blobFinder.loadMask();
+            skeletonFinder.panel->loadFromFile("trackings.xml");
+			//skeletonFinder.loadMask();
             networkMng.panel->loadFromFile("broadcast.xml");
 			post->loadFromFile("postprocessing.xml");
 			device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
@@ -864,7 +868,7 @@ void ofApp::keyPressed(int key){
 		case 'm':
 			bUpdateImageMask = !bUpdateImageMask;
 			if (bUpdateImageMask) {
-				blobFinder.clearMask();
+				//skeletonFinder.clearMask();
 			}
 			break;
 						

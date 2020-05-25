@@ -12,7 +12,7 @@
 #include "ofConstants.h"
 #include "ofxOsc.h"
 #include "TrackingClient.h"
-#include "BlobFinder.h"
+#include "SkeletonFinder.h"
 #include "Frustum.h"
 
 #include <cmath>
@@ -35,14 +35,14 @@ public:
     TrackingNetworkManager();
     
     void setup(ofxGui &gui, string _kinectSerial);
-    void update(BlobFinder & _blobFinder, Frustum & _frustum, ofMatrix4x4 _trans);
+    void update(SkeletonFinder & _SkeletonFinder, Frustum & _frustum, ofMatrix4x4 _trans);
 
-    void sendTrackingData(BlobFinder & _blobFinder);
+    void sendTrackingData(SkeletonFinder & _SkeletonFinder);
 
     void sendCalibFrustum(Frustum & _frustum, string ip, int port);
     void sendCalibTrans(ofMatrix4x4 & _trans, string _ip, int _port);
-    void sendCalibSensorBox(BlobFinder & _blobFinder, string _ip, int _port);
-    void sendGazePoint(BlobFinder & _blobFinder, string _ip, int _port);
+    void sendCalibSensorBox(SkeletonFinder & _SkeletonFinder, string _ip, int _port);
+    void sendGazePoint(SkeletonFinder & _SkeletonFinder, string _ip, int _port);
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);
     void checkTrackingClients(long _currentMillis);
