@@ -15,3 +15,7 @@ bin/FreeImage.dll
 bin/HeadSpaceRS*.*
 HeadSpaceRS.vcxproj.user
 icon.aps
+/bin/the-hole.lib
+/bin/the-hole.exe
+/bin/realsense2.dll
+/bin/Intel.Realsense.dll

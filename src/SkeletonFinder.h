@@ -90,6 +90,7 @@ public:
     SkeletonFinder() {}
 
     void setup(ofMatrix4x4* transformMatrix, ofxGui &gui);
+    void run();
 
     void updateSensorBox(int & value);
     

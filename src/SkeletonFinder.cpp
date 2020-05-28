@@ -9,7 +9,7 @@
 
 void SkeletonFinder::initNuitrack() {
 	tracker = ofxnui::Tracker::create();
-	tracker->init();
+	tracker->init("");
 
 	// depth feed settings
 	tracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
@@ -31,16 +31,24 @@ void SkeletonFinder::initNuitrack() {
 	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
 
 	// distance settings
-	tracker->setConfigValue("Segmantation.MAX_DISTANCE", "7000");
+	tracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
 	tracker->setConfigValue("Skeletonization.MaxDistance", "7000");
 
-	// skeleton detection callback
-	tracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
-		update(data);
-	});
+	tracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
+		auto issue = data->getIssue<nuitrack::Issue>();
+		if (issue) {
+			ofLogNotice() << "Issue detected! " << issue->getName() << " [" << issue->getId() << "]";
+		}
+		});
+	//tracker->setRGBCallback([](nuitrack::RGBFrame::Ptr) {ofLog(OF_LOG_NOTICE) << "Skeleton found ! None position : "; });
+	//tracker->setDepthCallback([](nuitrack::DepthFrame::Ptr) {});
+	//// skeleton detection callback
+	//tracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
+	//	update(data);
+	//	});
 }
 
-void SkeletonFinder::setup(ofMatrix4x4* transformMatrix, ofxGui& gui){
+void SkeletonFinder::setup(ofMatrix4x4* transformMatrix, ofxGui& gui) {
 	this->transformMatrix = transformMatrix;
 	initNuitrack();
 	initGUI(gui);
@@ -50,7 +58,7 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 	skeletons.clear();
 	// TODO: filter using the capture bounds
 	for (nuitrack::Skeleton skel : data->getSkeletons()) {
-		vector<Joint> joints;
+		/*vector<Joint> joints;
 		for (nuitrack::Joint joint : skel.joints) {
 			ofVec3f pos = ofxnui::Tracker::fromVector3(joint.real);
 			pos = *transformMatrix * pos;
@@ -58,14 +66,21 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 			joints.push_back(Joint(joint.type, joint.confidence, pos));
 		}
 
-		skeletons.push_back(Skeleton(skel.id, joints));
+		skeletons.push_back(Skeleton(skel.id, joints));*/
+		ofLog(OF_LOG_NOTICE) << "Skeleton found !";
+		/*ofLog(OF_LOG_NOTICE) << "Skeleton found ! None position : " << joints[0].pos;
+		ofLog(OF_LOG_NOTICE) << "Skeleton found ! Head position : " << joints[0].pos;*/
 	}
+}
+
+void SkeletonFinder::run() {
+	tracker->run();
 }
 
 
 // TODO: remove once it is safe to do so
 // There could be something of interest here
-void /*SkeletonFinder::*/update(){
+void /*SkeletonFinder::*/update() {
 	return;
 	//ofColor white = ofColor::white;
 	//ofColor black = ofColor::black;
@@ -444,20 +459,20 @@ void SkeletonFinder::drawSensorBox()
 	sensorBox.draw();
 }
 
-void SkeletonFinder::drawSkeletons2d(ofRectangle _rect){
+void SkeletonFinder::drawSkeletons2d(ofRectangle _rect) {
 	// TODO ? this seems to draw the skeleton on displays 1-5, which isn't _really_ useful
-    /*float xFactor = _rect.width / captureScreenSize.x;
-    float yFactor = _rect.height / captureScreenSize.y;
-    
-    ofNoFill();
-    for(int i = 0; i < skeletonEvents.size(); i++){
+	/*float xFactor = _rect.width / captureScreenSize.x;
+	float yFactor = _rect.height / captureScreenSize.y;
+
+	ofNoFill();
+	for(int i = 0; i < skeletonEvents.size(); i++){
 		if (skeletonEvents[i].hasBeenUpdated() && skeletonEvents[i].isActive()) {
 			ofSetColor(255, 0, 0, 255);
 			ofDrawRectangle(_rect.x + skeletonEvents[i].baseRectangle2d.x * xFactor, _rect.y + skeletonEvents[i].baseRectangle2d.y * yFactor, skeletonEvents[i].baseRectangle2d.width * xFactor, skeletonEvents[i].baseRectangle2d.height * yFactor);
 			ofDrawBitmapString("blob[" + ofToString(skeletonEvents[i].mID) + "]\n alive = " + ofToString(skeletonEvents[i].getAgeInMillis()) + "\n sort = " + ofToString(skeletonEvents[i].sortPos) + "\n x = " + ofToString(skeletonEvents[i].headTop.x) + "\n y = " + ofToString(skeletonEvents[i].headTop.y) + "\n z = " + ofToString(skeletonEvents[i].headTop.z), _rect.x + skeletonEvents[i].baseRectangle2d.getCenter().x * xFactor, _rect.y + skeletonEvents[i].baseRectangle2d.getCenter().y * yFactor);
 		}
-        
-    }*/
+
+	}*/
 }
 
 // adapted from example
@@ -501,35 +516,35 @@ void SkeletonFinder::drawSkeletons() {
 	}
 }
 
-void SkeletonFinder::updateSensorBox(int & value){
-    sensorBox.clear();
-    sensorBox.setMode(OF_PRIMITIVE_LINES);
-    
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
-    
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
-    sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
-    
-    //captureCam.setPosition((sensorBoxLeft.get() * SCALE + sensorBoxRight.get() * SCALE)/2, (sensorBoxBack.get() * SCALE + sensorBoxBack.get() * SCALE)/2, sensorBoxTop.get() * SCALE);
-    //captureCam.setPosition(5, 5, 0);
-    //captureCam.
+void SkeletonFinder::updateSensorBox(int& value) {
+	sensorBox.clear();
+	sensorBox.setMode(OF_PRIMITIVE_LINES);
+
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxBottom.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxBottom.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
+
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxTop.get() * SCALE));
+	sensorBox.addVertex(ofPoint(sensorBoxLeft.get() * SCALE, sensorBoxFront.get() * SCALE, sensorBoxTop.get() * SCALE));
+
+	//captureCam.setPosition((sensorBoxLeft.get() * SCALE + sensorBoxRight.get() * SCALE)/2, (sensorBoxBack.get() * SCALE + sensorBoxBack.get() * SCALE)/2, sensorBoxTop.get() * SCALE);
+	//captureCam.setPosition(5, 5, 0);
+	//captureCam.
 }

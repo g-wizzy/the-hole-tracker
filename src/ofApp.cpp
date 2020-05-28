@@ -202,6 +202,8 @@ void ofApp::setup(){
  
     setupViewports();
 
+	skeletonFinder.run();
+
     createHelp();
     
     capMesh.reSize(4);
