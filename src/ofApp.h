@@ -10,9 +10,10 @@
 #include "TrackingNetworkManager.h"
 #include "Frustum.h"
 #include "CaptureMeshArray.h"
+#include "PointCloudManager.h"
 
-#include "ofxRealSenseTwo.h"
-#include <librealsense2/rs.hpp> // Include RealSense Cross Platform API 
+#include "ofxNuitrack.h"
+#include <nuitrack/Nuitrack.h>
 
 #include <ofMatrix4x4.h>
 
@@ -31,7 +32,7 @@
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
-using namespace ofxRealSenseTwo;
+using namespace ofxnui;
 
 //helpfull links during development:
 // https://github.com/openframeworks/openFrameworks/issues/3817
@@ -39,7 +40,6 @@ using namespace ofxRealSenseTwo;
 class ofApp : public ofBaseApp{
 
 	public:
-        //ofApp() {}
 
 		void setup();
 		void update();
@@ -78,6 +78,7 @@ class ofApp : public ofBaseApp{
     //////////////////
 
     //viewports
+    void initViewports();
     void setupViewports();
     
     ofRectangle viewMain;
@@ -98,14 +99,13 @@ class ofApp : public ofBaseApp{
     /////////////
     //RealSense//
     /////////////
+
+    void initNuitrack();
         
-	RSDevicePtr realSense;
+    TrackerRef tracker;
+    PointCloudManager pointCloudManager;    
 
     ofMatrix4x4 unprojection;
-    
-    #ifdef USE_TWO_KINECTS
-        ofxKinect kinect2;
-    #endif
 
     bool dispRaw;
 
@@ -129,7 +129,7 @@ class ofApp : public ofBaseApp{
 	void createGUIDeviceParams();
 
     void createFrustumCone();
-    void updateFrustumCone(int & value);
+    void updateFrustumCone(int& val);
 
     /////////////////
     //COLOR CONTOUR//
@@ -145,6 +145,7 @@ class ofApp : public ofBaseApp{
     ///////////////
     //CALCULATION//
     ///////////////
+
     void updateCalc();
     void updateMatrix();
     void measurementCycleRaw();
@@ -189,6 +190,9 @@ class ofApp : public ofBaseApp{
     //////////////
     //PROPERTIES//
     //////////////
+    void setupCalibGui();
+    void setupTransformGui();
+
     ofxGui gui;
     
     ofxGuiPanel *setupCalib;

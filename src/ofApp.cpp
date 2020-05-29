@@ -7,41 +7,59 @@
 
 
 //--------------------------------------------------------------
-void ofApp::setup(){
-#ifdef TARGET_OPENGLES
-	shader.load("shadersES2/shader");
-#else
-	if (ofIsGLProgrammableRenderer()) {
-		shader.load("shadersGL3/shader");
-	}
-	else {
-		shader.load("shadersGL2/shader");
-	}
-#endif
+void ofApp::initNuitrack() {
+	tracker = ofxnui::Tracker::create();
+	tracker->init("");
 
-	ofLog(OF_LOG_NOTICE, "MainAPP: looking for RealSense Device...");
+	// depth feed settings
+	tracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
+	tracker->setConfigValue("Realsense2Module.Depth.RawWidth", "1280");
+	tracker->setConfigValue("Realsense2Module.Depth.RawHeight", "720");
+	tracker->setConfigValue("Realsense2Module.Depth.ProcessWidth", "1280");
+	tracker->setConfigValue("Realsense2Module.Depth.ProcessHeight", "720");
+	tracker->setConfigValue("Realsense2Module.Depth.ProcessMaxDepth", "7000");
 
-	ofSetLogLevel(OF_LOG_VERBOSE);
+	// rgb feed settings
+	tracker->setConfigValue("Realsense2Module.RGB.FPS", "30");
+	tracker->setConfigValue("Realsense2Module.RGB.RawWidth", "1280");
+	tracker->setConfigValue("Realsense2Module.RGB.RawHeight", "720");
+	tracker->setConfigValue("Realsense2Module.RGB.ProcessWidth", "1280");
+	tracker->setConfigValue("Realsense2Module.RGB.ProcessHeight", "720");
 
-	// crashes here
-	realSense = RSDevice::createUniquePtr();
+	// feeds alignement
+	tracker->setConfigValue("DepthProvider.Depth2ColorRegistration", "true");
 
-	realSense->checkConnectedDialog();
+	// post processing settings
+	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_alpha", "0.1");
+	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
 
-	//realSense->hardwareReset();
+	// distance settings
+	tracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
+	tracker->setConfigValue("Skeletonization.MaxDistance", "7000");
 
-	realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
+	tracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
+		auto issue = data->getIssue<nuitrack::Issue>();
+		if (issue) {
+			ofLogNotice() << "Issue detected! " << issue->getName() << " [" << issue->getId() << "]";
+		}
+		});
+	tracker->setRGBCallback([this](nuitrack::RGBFrame::Ptr data) {
+		pointCloudManager.updateRGB(data);
+		});
+	tracker->setDepthCallback([this](nuitrack::DepthFrame::Ptr data) {
+		pointCloudManager.updateDepth(data);
+		});
+	tracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
+		skeletonFinder.update(data);
+		});
 
-	ofLog(OF_LOG_NOTICE, "... RealSense Device found.");
+	pointCloudManager.setDepthSensor(tracker->depthTracker);
 
-	// we don't want to be running to fast
-	//ofSetVerticalSync(true);
-	//ofSetFrameRate(30);
-    
-	/////////////////////////////
-	//     DEFINE VIEWPORTS    //
-	/////////////////////////////
+	// TODO: maybe account for this, that used to be in old code :
+	// realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
+}
 
+void ofApp::initViewports() {
 	float xOffset = VIEWGRID_WIDTH; //ofGetWidth() / 3;
 	float yOffset = VIEWPORT_HEIGHT / N_CAMERAS;
 
@@ -58,22 +76,88 @@ void ofApp::setup(){
 		viewGrid[i].height = yOffset;
 	}
 
-    iMainCamera = 0;
-    
-    previewCam.setUpAxis(glm::vec3(0, 0, 1));
-    previewCam.setTranslationSensitivity(2., 2., 2.);
+	iMainCamera = 0;
+
+	previewCam.setUpAxis(glm::vec3(0, 0, 1));
+	previewCam.setTranslationSensitivity(2., 2., 2.);
 	previewCam.setNearClip(0.001f);
+}
 
-	////////////////////
-	//  BLOBFINDER    //
-	////////////////////
-	ofLog(OF_LOG_NOTICE, "MainAPP: setting up blobfinder");
+void ofApp::setupCalibGui() {
+	// TODO: remove what is useless
 
-	skeletonFinder.setup(&deviceTransform, gui);
+	setupCalib = gui.addPanel();
+
+	setupCalib->loadTheme("theme/theme_light.json");
+	setupCalib->setName("Calibration Panel");
+
+	setupCalib->add(blobGrain.set("Grain", 2, 1, 10));
+
+	setupCalib->add(calibPoint_X.set("calibrationPoint_X", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
+	setupCalib->add(calibPoint_Y.set("calibrationPoint_Y", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
+	setupCalib->add(calibPoint_Z.set("calibrationPoint_Z", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
+
+	nearFrustum.addListener(this, &ofApp::updateFrustumCone);
+	farFrustum.addListener(this, &ofApp::updateFrustumCone);
+
+	frustumGuiGroup.setName("frustumField");
+	frustumGuiGroup.add(nearFrustum.set("nearFrustum", 400, 200, 2000));
+	frustumGuiGroup.add(farFrustum.set("farFrustum", 4000, 2000, 10000));
+	setupCalib->addGroup(frustumGuiGroup);
+
+	//setupCalib->add(transformation.set("matrix rx ry tz", ofVec3f(0, 0, 0), ofVec3f(-90, -90, -6000), ofVec3f(90, 90, 6000)));
+
+	setupCalib->loadFromFile("settings.xml");
+}
+
+void ofApp::setupTransformGui() {
+	guitransform = gui.addPanel();
+
+	guitransform->loadTheme("theme/theme_light.json");
+	guitransform->setName("Transformation");
+
+	transformationGuiGroup.setName("Matrix");
+	transformationGuiGroup.add(transformation.set("Transform", ofMatrix4x4()));
+
+	guitransform->addGroup(transformationGuiGroup);
+
+	guitransform->loadFromFile("transformation.xml");
+
+	bool invisible = false;
+
+	guitransform->setVisible(invisible);
+}
+
+void ofApp::setup(){
+	//ofLog(OF_LOG_NOTICE) << "Entered setup";
+#ifdef TARGET_OPENGLES
+	shader.load("shadersES2/shader");
+#else
+	if (ofIsGLProgrammableRenderer()) {
+		shader.load("shadersGL3/shader");
+	}
+	else {
+		shader.load("shadersGL2/shader");
+	}
+#endif
+
+	ofLog(OF_LOG_NOTICE) << "Nuitrack setup started";
+	initNuitrack();
+	skeletonFinder.setTransformMatrix(&deviceTransform);
+	ofLog(OF_LOG_NOTICE) << "Nuitrack setup ended";
+
+	// we don't want to be running too fast
+	//ofSetVerticalSync(true);
+	//ofSetFrameRate(30);
+
+	ofLog(OF_LOG_NOTICE) << "Viewport setup started";
+	initViewports();
+	ofLog(OF_LOG_NOTICE) << "Viewport setup ended";
 
 	/////////////////////////////
 	//   REALSENSE GUI   SETUP //
 	/////////////////////////////
+	/*
 	ofLog(OF_LOG_NOTICE, "MainAPP: loading postprocessing GUI");
 
 	post = gui.addPanel();
@@ -93,57 +177,13 @@ void ofApp::setup(){
 	post->add(realSense->param_filterTemporal_persistency);
 
 	post->loadFromFile("postprocessing.xml");
+	*/
 
-
-    /////////////////////////////
-    //CALIBRATION GUI   SETUP //
-    ////////////////////////////
-	ofLog(OF_LOG_NOTICE, "MainAPP: loading calibration settings");
-
-    setupCalib = gui.addPanel();
-    
-    setupCalib->loadTheme("theme/theme_light.json");
-    setupCalib->setName("Calibration Panel");
-    
-    setupCalib->add(blobGrain.set("Grain", 2, 1, 10));
-
-    setupCalib->add(calibPoint_X.set("calibrationPoint_X", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
-    setupCalib->add(calibPoint_Y.set("calibrationPoint_Y", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
-    setupCalib->add(calibPoint_Z.set("calibrationPoint_Z", ofVec2f(REALSENSE_VIDEO_WIDTH / 2, REALSENSE_VIDEO_HEIGHT / 2), ofVec2f(0, 0), ofVec2f(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT)));
-    
-    nearFrustum.addListener(this, &ofApp::updateFrustumCone);
-    farFrustum.addListener(this, &ofApp::updateFrustumCone);
-
-    frustumGuiGroup.setName("frustumField");
-    frustumGuiGroup.add(nearFrustum.set("nearFrustum", 400, 200, 2000));
-    frustumGuiGroup.add(farFrustum.set("farFrustum", 4000, 2000, 10000));
-    setupCalib->addGroup(frustumGuiGroup);
-    
-    //setupCalib->add(transformation.set("matrix rx ry tz", ofVec3f(0, 0, 0), ofVec3f(-90, -90, -6000), ofVec3f(90, 90, 6000)));
- 
-    setupCalib->loadFromFile("settings.xml");
-
-	////////////////////////////
-	//   GUI   Transfromation //
-	////////////////////////////
-	ofLog(OF_LOG_NOTICE, "MainAPP: loading transformation matrix");
-
-	guitransform = gui.addPanel();
-
-	guitransform->loadTheme("theme/theme_light.json");
-	guitransform->setName("Transformation");
-
-	transformationGuiGroup.setName("Matrix");
-	transformationGuiGroup.add(transformation.set("Transform", ofMatrix4x4()));
-
-	guitransform->addGroup(transformationGuiGroup);
-
-	guitransform->loadFromFile("transformation.xml");
-
-	bool invisible = false;
-
-	guitransform->setVisible(invisible);
-
+	ofLog(OF_LOG_NOTICE, "Loading clibration GUI");
+	setupCalibGui();
+	ofLog(OF_LOG_NOTICE, "Loading transformation GUI");
+	setupTransformGui();
+	
 	updateMatrix();
 
 	/////////////////////////////
@@ -158,21 +198,21 @@ void ofApp::setup(){
 	//   OPERATING GUI         //
 	/////////////////////////////
 
-	operating = gui.addPanel();
-	operating->loadTheme("theme/theme_light.json");
-	operating->setName("Operating");
+	//operating = gui.addPanel();
+	//operating->loadTheme("theme/theme_light.json");
+	//operating->setName("Operating");
 
-	operatingModes.setName("Modes");
-	operatingModes.add(mode0Capture.set("normal", false));
-	operatingModes.add(mode1Record.set("recording", false));
-	operatingModes.add(mode2Playback.set("playback", false));
+	//operatingModes.setName("Modes");
+	//operatingModes.add(mode0Capture.set("normal", false));
+	//operatingModes.add(mode1Record.set("recording", false));
+	//operatingModes.add(mode2Playback.set("playback", false));
 
-	operatingToggles = operating->addGroup(operatingModes);
-	operatingToggles->setExclusiveToggles(true);
-	operatingToggles->setConfig(ofJson({ {"type", "radio"} }));
+	//operatingToggles = operating->addGroup(operatingModes);
+	//operatingToggles->setExclusiveToggles(true);
+	//operatingToggles->setConfig(ofJson({ {"type", "radio"} }));
 
-	operatingToggles->setActiveToggle(0);
-	operatingToggles->getActiveToggleIndex().addListener(this, &ofApp::changeOperation);	
+	//operatingToggles->setActiveToggle(0);
+	//operatingToggles->getActiveToggleIndex().addListener(this, &ofApp::changeOperation);	
 
     ////////////////////////
     //    RealSense       // 
@@ -181,9 +221,8 @@ void ofApp::setup(){
 	ofLog(OF_LOG_NOTICE, "MainAPP: starting attached Device...");
 
 	// firing up the device, creating the GUI and loading the device parameters
-	if (realSense->capture()) {
-		createGUIDeviceParams();
-	}
+	tracker->run();
+	createGUIDeviceParams();
 
 	ofLog(OF_LOG_NOTICE, "...starting attached Device done.");
 
@@ -192,130 +231,101 @@ void ofApp::setup(){
 	bPreviewPointCloud = false;
     
 	ofLog(OF_LOG_NOTICE, "MainAPP: setting up networking...");
-	
-	networkMng.setup(gui, realSense->getSerialNumber(-1));
-
+	// TODO: remove useless arg
+	networkMng.setup(gui, "sauce");
 	ofLog(OF_LOG_NOTICE, "...networking done.");
 
-    int * val = 0;
-    updateFrustumCone(*val);
- 
+	int val = 0;
+    updateFrustumCone(val);
+	//crashes here
     setupViewports();
-
-	skeletonFinder.run();
-
     createHelp();
+
+	tracker->run();
     
     capMesh.reSize(4);
     
-    ofSetLogLevel(OF_LOG_NOTICE);
-    
 	ofSetLogLevel(OF_LOG_VERBOSE);
     //ofLogToFile("myLogFile.txt", true);
+	ofLog(OF_LOG_NOTICE) << "Setup over";
 
 	if (ofIsGLProgrammableRenderer()) {
 		ofLog(OF_LOG_NOTICE, "ofIsGLProgrammableRenderer() = " + ofToString(ofIsGLProgrammableRenderer()));
 	}
 }
 
-void ofApp::changeOperation(int& _index) {
-
-	switch (_index) {
-	case 0:
-		if (realSense->capture()) {
-			createGUIDeviceParams();
-			setupViewports();
-		}
-		break;
-	case 1:
-		if (realSense->record()) {
-			createGUIDeviceParams();
-			setupViewports();
-		}
-		break;
-	case 2:
-		if (realSense->playback()) {
-		}
-		break;
-	}
-}
+void ofApp::changeOperation(int& _index) {}
 
 void ofApp::createGUIDeviceParams() {
+	//ofLog(OF_LOG_NOTICE) << "Entered createGUIDeviceParams";
 	device->clear();
 	device->loadTheme("theme/theme_light.json");
 	device->setName("RealSense Device");
-	device->add<ofxGuiLabel>(realSense->getSerialNumber(-1));
 
 	intrinsicGuiGroup.clear();
 	intrinsicGuiGroup.setName("Settings");
-	intrinsicGuiGroup.add(realSense->param_deviceLaser);
-	intrinsicGuiGroup.add(realSense->param_deviceLaser_mag);
-	intrinsicGuiGroup.add(realSense->param_deviceAutoExposure);
-	intrinsicGuiGroup.add(realSense->param_deviceExposure_mag);
-	intrinsicGuiGroup.add(realSense->param_deviceGain_mag);
-	intrinsicGuiGroup.add(realSense->param_deviceFrameQueSize_mag);
-	intrinsicGuiGroup.add(realSense->param_deviceAsicTemparature);
-	intrinsicGuiGroup.add(realSense->param_deviceProjectorTemparature);
+	//intrinsicGuiGroup.add(realSense->param_deviceLaser);
+	//intrinsicGuiGroup.add(realSense->param_deviceLaser_mag);
+	//intrinsicGuiGroup.add(realSense->param_deviceAutoExposure);
+	//intrinsicGuiGroup.add(realSense->param_deviceExposure_mag);
+	//intrinsicGuiGroup.add(realSense->param_deviceGain_mag);
+	//intrinsicGuiGroup.add(realSense->param_deviceFrameQueSize_mag);
+	//intrinsicGuiGroup.add(realSense->param_deviceAsicTemparature);
+	//intrinsicGuiGroup.add(realSense->param_deviceProjectorTemparature);
 
 	device->addGroup(intrinsicGuiGroup);
 
-	device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+	device->loadFromFile("device.xml");
 }
 
 //--------------------------------------------------------------
 void ofApp::setupViewports(){
+	//ofLog(OF_LOG_NOTICE) << "Entered setupViewports";
 	//call here whenever we resize the window
- 
 	device->setWidth(MENU_WIDTH / 4);
-	post->setWidth(MENU_WIDTH / 4);
+	//post->setWidth(MENU_WIDTH / 4);
 	setupCalib->setWidth(MENU_WIDTH / 4);
-	skeletonFinder.panel->setWidth(MENU_WIDTH / 4);
+	//skeletonFinder.panel->setWidth(MENU_WIDTH / 4);
 	networkMng.panel->setWidth(MENU_WIDTH / 4);
-	operating->setWidth(MENU_WIDTH / 4);
+	//operating->setWidth(MENU_WIDTH / 4);
 
 	device->setPosition(ofGetWidth() - MENU_WIDTH, 20);
-	post->setPosition(ofGetWidth() - MENU_WIDTH, 400);
-	operating->setPosition(ofGetWidth() - MENU_WIDTH, 800);
+	//post->setPosition(ofGetWidth() - MENU_WIDTH, 400);
+	//operating->setPosition(ofGetWidth() - MENU_WIDTH, 800);
 	setupCalib->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 3, 20);
-	skeletonFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 2, 20);
+	//skeletonFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4 * 2, 20);
 	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4, 20);
-    //ofLog(OF_LOG_NOTICE, "ofGetWidth()" + ofToString(ofGetWidth()));
-
-    
-	//
-	//--
 }
 
-void ofApp::updateFrustumCone(int & value){
-    if(realSense != NULL && realSense->isRunning()){
-		double ref_pix_size = 1;// kinect.getZeroPlanePixelSize();
-		double ref_distance = 1;// kinect.getZeroPlaneDistance();
+void ofApp::updateFrustumCone(int& val){
+	//ofLog(OF_LOG_NOTICE) << "Entered updateFrustumCone";
+	double ref_pix_size = 1;// kinect.getZeroPlanePixelSize();
+	double ref_distance = 1;// kinect.getZeroPlaneDistance();
         
-        realSenseFrustum.near1 = nearFrustum.get();
-        realSenseFrustum.far1 = farFrustum.get();
+    realSenseFrustum.near1 = nearFrustum.get();
+    realSenseFrustum.far1 = farFrustum.get();
         
-        double factorNear = 2 * ref_pix_size * realSenseFrustum.near1 / ref_distance;
-        double factorFar = 2 * ref_pix_size * realSenseFrustum.far1 / ref_distance;
+    double factorNear = 2 * ref_pix_size * realSenseFrustum.near1 / ref_distance;
+    double factorFar = 2 * ref_pix_size * realSenseFrustum.far1 / ref_distance;
         
-        //ofVec3f((x - DEPTH_X_RES/2) *factor, (y - DEPTH_Y_RES/2) *factor, raw[y * w + x]));
+    //ofVec3f((x - DEPTH_X_RES/2) *factor, (y - DEPTH_Y_RES/2) *factor, raw[y * w + x]));
         
-        realSenseFrustum.left = (0 - DEPTH_X_RES/2) *factorNear;
-        realSenseFrustum.right = (640 - DEPTH_X_RES/2) *factorNear;
-        realSenseFrustum.top = (0 - DEPTH_Y_RES/2) *factorNear;
-        realSenseFrustum.bottom = (480 - DEPTH_Y_RES/2) *factorNear;
+    realSenseFrustum.left = (0 - DEPTH_X_RES/2) *factorNear;
+    realSenseFrustum.right = (640 - DEPTH_X_RES/2) *factorNear;
+    realSenseFrustum.top = (0 - DEPTH_Y_RES/2) *factorNear;
+    realSenseFrustum.bottom = (480 - DEPTH_Y_RES/2) *factorNear;
         
-        realSenseFrustum.leftFar = (0 - DEPTH_X_RES/2) *factorFar;
-        realSenseFrustum.rightFar = (640 - DEPTH_X_RES/2) *factorFar;
-        realSenseFrustum.topFar = (0 - DEPTH_Y_RES/2) *factorFar;
-        realSenseFrustum.bottomFar = (480 - DEPTH_Y_RES/2) *factorFar;
+    realSenseFrustum.leftFar = (0 - DEPTH_X_RES/2) *factorFar;
+    realSenseFrustum.rightFar = (640 - DEPTH_X_RES/2) *factorFar;
+    realSenseFrustum.topFar = (0 - DEPTH_Y_RES/2) *factorFar;
+    realSenseFrustum.bottomFar = (480 - DEPTH_Y_RES/2) *factorFar;
         
-        realSenseFrustum.update();
-        //createFrustumCone();
-    }
-    
+    realSenseFrustum.update();
+    //createFrustumCone();    
 }
 
 void ofApp::measurementCycleRaw(){
+	//ofLog(OF_LOG_NOTICE) << "Entered measurementCycleRaw";
     if(cycleCounter < N_MEASURMENT_CYCLES){
         planePoint1Meas[cycleCounter] = calcPlanePoint(calibPoint_X, 0, 1);
         planePoint2Meas[cycleCounter] = calcPlanePoint(calibPoint_Y, 0, 1);
@@ -340,6 +350,7 @@ void ofApp::measurementCycleRaw(){
 }
 
 void ofApp::measurementCycleFine(){
+	//ofLog(OF_LOG_NOTICE) << "Entered measurementCycleFine";
     if(cycleCounter < N_MEASURMENT_CYCLES){
         ofVec3f p1meas = calcPlanePoint(calibPoint_X, 0, 1);
         ofVec3f p2meas = calcPlanePoint(calibPoint_Y, 0, 1);
@@ -375,6 +386,7 @@ void ofApp::measurementCycleFine(){
 
 //--------------------------------------------------------------
 void ofApp::updateCalc(){
+	//ofLog(OF_LOG_NOTICE) << "Entered updateCalc";
 
 	// This algorithm calculates the transformation matrix to 
 	// transform from the camera centered coordinate system to the
@@ -465,6 +477,7 @@ void ofApp::updateCalc(){
 
 //--------------------------------------------------------------
 void ofApp::updateMatrix(){
+	//ofLog(OF_LOG_NOTICE) << "Entered updateMatrix";
 
 	sphere_X.setPosition(planePoint_X);
 	sphere_Y.setPosition(planePoint_Y);
@@ -483,10 +496,12 @@ void ofApp::updateMatrix(){
 
 //--------------------------------------------------------------
 glm::vec3 ofApp::calcPlanePoint(ofParameter<ofVec2f> & cpoint, int _size, int _step){
+	//ofLog(OF_LOG_NOTICE) << "Entered calcPlanePoint";
 	glm::vec3 ppoint;
 
-	int width = realSense->getDepthWidth();
-    int height = realSense->getDepthHeight();
+	// TODO: these values are in nuitrack.config
+	int width = 640;// realSense->getDepthWidth();
+	int height = 480;// realSense->getDepthHeight();
    
     int size = _size;
     int step = _step;
@@ -504,7 +519,7 @@ glm::vec3 ofApp::calcPlanePoint(ofParameter<ofVec2f> & cpoint, int _size, int _s
     
     for(int y = minY; y <= maxY; y = y + step) {
         for(int x = minX; x <= maxX; x = x + step) {
- 			coord = realSense->getSpacePointFromInfraLeftFrameCoord(glm::vec2(x, y));
+			coord = Tracker::fromVector3(tracker->depthTracker->convertProjToRealCoords(nuitrack::Vector3(x, y, 0)));
             if(coord.z > 0) {
 				ppoint += coord;
                 counter++;
@@ -520,54 +535,34 @@ glm::vec3 ofApp::calcPlanePoint(ofParameter<ofVec2f> & cpoint, int _size, int _s
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	
+	tracker->poll();
 	ofBackground(100, 100, 100);
-    	
-	// there is a new frame and we are connected
-	if(realSense->update(ofxRealSenseTwo::PointCloud::INFRALEFT)) {
 
-        if(bUpdateMeasurment){
-            measurementCycleRaw();
-        }
-        if(bUpdateMeasurmentFine){
-            measurementCycleFine();
-        }
+    if(bUpdateMeasurment){
+        measurementCycleRaw();
+    }
 
-		if (bUpdateImageMask) {
-			//skeletonFinder.captureMaskBegin();
-			drawCapturePointCloud(true);
-			//skeletonFinder.captureMaskEnd();
-		}
-		else {
-			//////////////////////////////////
-			// Cature captureCloud to FBO
-			//////////////////////////////////
+    if(bUpdateMeasurmentFine){
+        measurementCycleFine();
+    }
 
-			//skeletonFinder.captureBegin();
-			drawCapturePointCloud(false);
-			//skeletonFinder.captureEnd();
+	// TODO: remove useless (?)
+	drawCapturePointCloud(true);
 
-			//////////////////////////////////
-			// BlobFinding on the captured FBO
-			/////////////////////////////////////
-			//skeletonFinder.update();
-
-			networkMng.update(skeletonFinder, realSenseFrustum, transformation.get());
-		}
-    
-	}
+	networkMng.update(skeletonFinder, realSenseFrustum, transformation.get());
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+	//ofLog(OF_LOG_NOTICE) << "Entered draw";
 
 	ofSetColor(255, 255, 255);
 
     //ofLogNotice() << "draw next frame";
     if(bShowVisuals){
         //Draw viewport previews
-		realSense->drawDepthStream(viewGrid[0]);
-		realSense->drawInfraLeftStream(viewGrid[1]);
+		// TODO: basic rgb & depth streams
+		
 
         //skeletonFinder.grayImage.draw(viewGrid[2]);
         //skeletonFinder.contourFinder.draw(viewGrid[3]);
@@ -576,11 +571,13 @@ void ofApp::draw(){
         
         switch (iMainCamera) {
             case 0:
-				realSense->drawDepthStream(viewMain);
+				// TODO
+				//realSense->drawDepthStream(viewMain);
                 drawCalibrationPoints();
                 break;
             case 1:
-				realSense->drawInfraLeftStream(viewMain);
+				// TODO
+				//realSense->drawInfraLeftStream(viewMain);
                 drawCalibrationPoints();
                 break;
             case 2:
@@ -660,6 +657,7 @@ void ofApp::draw(){
 }
 
 void ofApp::drawPreview() {
+	//ofLog(OF_LOG_NOTICE) << "Entered drawPreview";
 	glPointSize(4);
 	glEnable(GL_DEPTH_TEST);
 
@@ -669,7 +667,8 @@ void ofApp::drawPreview() {
     //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
 	ofMultMatrix(deviceTransform);
 	if (bPreviewPointCloud) {
-		realSense->draw();
+		// TODO: what does this do
+		pointCloudManager.draw();
 	}
 	ofFill();
 	ofSetColor(255, 0, 0);
@@ -693,6 +692,7 @@ void ofApp::drawPreview() {
     skeletonFinder.drawSensorBox();
 
     ofNoFill();
+	glLineWidth(5);
     ofSetColor(255, 100, 255);
 	skeletonFinder.drawSkeletons();
     //skeletonFinder.drawBodyBlobsBox();
@@ -701,7 +701,6 @@ void ofApp::drawPreview() {
     ofFill();
     ofSetColor(255, 100, 100);
     //skeletonFinder.drawGazePoint();
-
     
 	glDisable(GL_DEPTH_TEST);
 	ofPopMatrix();
@@ -709,6 +708,7 @@ void ofApp::drawPreview() {
 }
 
 void ofApp::drawCapturePointCloud(bool _mask) {
+	//ofLog(OF_LOG_NOTICE) << "Entered drawCapturePointCloud";
     glEnable(GL_DEPTH_TEST);
 
 	shader.begin();
@@ -731,7 +731,8 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 
 	ofPushMatrix();
 	ofMultMatrix(deviceTransform);
-	realSense->draw();
+	//realSense->draw();
+	pointCloudManager.draw();
 	ofPopMatrix();
 	
 	shader.end();
@@ -741,6 +742,7 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 }
 
 void ofApp::drawCalibrationPoints(){
+	//ofLog(OF_LOG_NOTICE) << "Entered drawCalibrationPoints";
     glDisable(GL_DEPTH_TEST);
     ofPushStyle();
     ofSetColor(255, 0, 0);
@@ -758,9 +760,7 @@ void ofApp::drawCalibrationPoints(){
 //--------------------------------------------------------------
 void ofApp::exit() {
     ofLog(OF_LOG_NOTICE, "exiting application...");
-
-	realSense->stop();
-	
+	// Nuitrack auto-releases on destroy ...
 }
 
 void ofApp::createHelp(){
@@ -775,7 +775,6 @@ void ofApp::createHelp(){
 	help += "press x|y|z and then mouse-click -> to change the calibration points in viewport 1\n";
 	help += "press k -> to update the calculation\n";
 	help += "press r -> to show calculation results \n";
-	help += "press t -> to terminate the connection, connection is: " + ofToString(realSense->isRunning()) + "\n";
 	help += "press o -> to open the connection again\n";
     help += "ATTENTION: Setup-Settings (ServerID and Video) will only apply after restart\n";
  	help += "Broadcasting ip: "+networkMng.broadcastIP.get()+" port: "+ofToString(networkMng.broadcastPort.get())+" serverID: "+ofToString(networkMng.mServerID)+" \n";
@@ -823,7 +822,7 @@ void ofApp::keyPressed(int key){
 			//skeletonFinder.saveMask();
 			networkMng.panel->saveToFile("broadcast.xml");
 			post->saveToFile("postprocessing.xml");
-			device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
+			device->saveToFile("device.xml");
 			guitransform->saveToFile("transformation.xml");
 			break;
 
@@ -833,7 +832,7 @@ void ofApp::keyPressed(int key){
 			//skeletonFinder.loadMask();
             networkMng.panel->loadFromFile("broadcast.xml");
 			post->loadFromFile("postprocessing.xml");
-			device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+			device->loadFromFile("device.xml");
 			guitransform->loadFromFile("transformation.xml");
 			break;
            
