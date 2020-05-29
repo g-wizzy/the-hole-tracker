@@ -34,7 +34,7 @@ void PointCloudManager::updateRGB(RGBFrame::Ptr data)
 	uint8_t* colorDataPtr = (uint8_t*)rgbData;
 	ofPixels rgbPix;
 	// Assuming the data comes from the live feed (hence BGR)
-	rgbPix.setFromPixels(colorDataPtr, rgbFrameSize.x, rgbFrameSize.y, OF_PIXELS_RGB);
+	rgbPix.setFromPixels(colorDataPtr, rgbFrameSize.x, rgbFrameSize.y, OF_PIXELS_BGR);
 	rgbTex.loadData(rgbPix);
 
 	createPointCloudIfNotExist(depthFrameSize);
@@ -44,7 +44,7 @@ void PointCloudManager::updateRGB(RGBFrame::Ptr data)
 			const int index = y * depthFrameSize.x + x;
 			const int skippedIndex = (y / skip) * (depthFrameSize.x / skip) + (x / skip);
 
-			pointCloud.setColor(skippedIndex, rgbPix.getColor(index));
+			pointCloud.setColor(skippedIndex, rgbPix.getColor(x, y));
 		}
 	}
 }
@@ -79,6 +79,8 @@ void PointCloudManager::createPointCloudIfNotExist(glm::vec2 dim)
 		ofLog(OF_LOG_NOTICE) << "YOU ONLY SEE THIS ONCE";
 
 		pointCloud.setMode(OF_PRIMITIVE_POINTS);
+		pointCloud.enableColors();
+
 		// Allocate
 		pointCloud.clear();
 		int size = ceil(((float)dim.x / skip) * ((float)dim.y / skip));
@@ -88,7 +90,7 @@ void PointCloudManager::createPointCloudIfNotExist(glm::vec2 dim)
 		pointCloud.addVertices(p);
 
 		vector<ofFloatColor> c;
-		c.assign(size, ofFloatColor(0, 0, 0, 0.9));
+		c.assign(size, ofFloatColor(0, 0, 0, 1));
 		pointCloud.addColors(c);
 	}
 }

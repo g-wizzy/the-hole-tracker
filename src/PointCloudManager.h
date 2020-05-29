@@ -19,7 +19,7 @@ private:
 
 	ofVboMesh pointCloud;
 
-	const int skip = 2;
+	const int skip = 4;
 
 	void createPointCloudIfNotExist(glm::vec2 dim);
 
