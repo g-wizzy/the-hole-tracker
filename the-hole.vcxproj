@@ -193,6 +193,7 @@
     <ClCompile Include="src\Linef.cpp" />
     <ClCompile Include="src\OrthoCamera.cpp" />
     <ClCompile Include="src\Planef.cpp" />
+    <ClCompile Include="src\PointCloudManager.cpp" />
     <ClCompile Include="src\SkeletonFinder.cpp" />
     <ClCompile Include="src\TrackingClient.cpp" />
     <ClCompile Include="src\TrackingNetworkManager.cpp" />
@@ -260,6 +261,7 @@
     <ClInclude Include="src\Linef.h" />
     <ClInclude Include="src\OrthoCamera.h" />
     <ClInclude Include="src\Planef.h" />
+    <ClInclude Include="src\PointCloudManager.h" />
     <ClInclude Include="src\SkeletonFinder.h" />
     <ClInclude Include="src\TrackingClient.h" />
     <ClInclude Include="src\TrackingNetworkManager.h" />
