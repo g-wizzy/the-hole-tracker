@@ -24,7 +24,10 @@ private:
 	void createPointCloudIfNotExist(glm::vec2 dim);
 
 public:
-	void draw();
+	void drawPointCloud();
+	void drawRGB(const ofRectangle& viewRect);
+	void drawDepth(const ofRectangle& viewRect);
+
 	void updateRGB(RGBFrame::Ptr data);
 	void updateDepth(DepthFrame::Ptr data);
 

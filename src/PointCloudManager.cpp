@@ -1,6 +1,6 @@
 #include "PointCloudManager.h"
 
-void PointCloudManager::draw()
+void PointCloudManager::drawPointCloud()
 {
 	//ofLog(OF_LOG_NOTICE) << "Drawing cloud point (" << pointCloud.getVertices().size() << ") points)";
 	ofPushMatrix();
@@ -17,6 +17,14 @@ void PointCloudManager::draw()
 	ofPopMatrix();
 }
 
+void PointCloudManager::drawRGB(const ofRectangle& viewRect) {
+	rgbTex.draw(viewRect);
+}
+
+void PointCloudManager::drawDepth(const ofRectangle& viewRect) {
+	depthTex.draw(viewRect);
+}
+
 void PointCloudManager::updateRGB(RGBFrame::Ptr data)
 {
 	rgbFrameSize.x = data->getCols();
@@ -26,7 +34,7 @@ void PointCloudManager::updateRGB(RGBFrame::Ptr data)
 	uint8_t* colorDataPtr = (uint8_t*)rgbData;
 	ofPixels rgbPix;
 	// Assuming the data comes from the live feed (hence BGR)
-	rgbPix.setFromPixels(colorDataPtr, rgbFrameSize.x, rgbFrameSize.y, OF_PIXELS_BGR);
+	rgbPix.setFromPixels(colorDataPtr, rgbFrameSize.x, rgbFrameSize.y, OF_PIXELS_RGB);
 	rgbTex.loadData(rgbPix);
 
 	createPointCloudIfNotExist(depthFrameSize);
@@ -36,7 +44,7 @@ void PointCloudManager::updateRGB(RGBFrame::Ptr data)
 			const int index = y * depthFrameSize.x + x;
 			const int skippedIndex = (y / skip) * (depthFrameSize.x / skip) + (x / skip);
 
-			pointCloud.setColor(skippedIndex, 10 * rgbPix.getColor(index));
+			pointCloud.setColor(skippedIndex, rgbPix.getColor(index));
 		}
 	}
 }
