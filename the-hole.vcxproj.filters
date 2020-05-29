@@ -205,6 +205,9 @@
     <ClCompile Include="src\SkeletonFinder.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\PointCloudManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -1809,6 +1812,9 @@
       <Filter>addons\ofxRealSenseTwo\libs\IntelRealSense_2.33.1\include\librealsense2</Filter>
     </ClInclude>
     <ClInclude Include="src\SkeletonFinder.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PointCloudManager.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

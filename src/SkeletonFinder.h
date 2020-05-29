@@ -26,41 +26,12 @@
 
 using namespace tdv;
 
-// TODO: This is the file which will change the most
-/* included in ofApp and TrackingNetworkManager
-methods and fields called in ofApp :
-    setup(gui)
-    panel->set{Width,Position}
-    {
-    //update
-    skeletonFinder.captureMaskBegin();
-    drawCapturePointCloud(true);
-    skeletonFinder.captureMaskEnd();
-    }
-    update
-    {
-    //draw
-    skeletonFinder.grayImage.draw(viewGrid[2]);
-    skeletonFinder.contourFinder.draw(viewGrid[3]);
-    skeletonFinder.maskFbo.draw(viewGrid[4]);
-    }
-    drawSkel2d
-    drawSkel
-    sensorBoxXXX
-    clearMask
-    saveMask
-    loadMask
-methods and fields called in TrackingetworkManager :
-    sensorBoxXXX
-    blobEvents // should be bypassed via nuitrack itself
-*/
-
 struct Joint {
     nuitrack::JointType type;
     float confidence;
-    ofVec3f pos;
+    glm::vec3 pos;
 
-    Joint(nuitrack::JointType type, float confidence, ofVec3f pos) :
+    Joint(nuitrack::JointType type, float confidence, glm::vec3 pos) :
         type(type), confidence(confidence), pos(pos) {}
 };
 
@@ -89,8 +60,9 @@ class SkeletonFinder {
 public:
     SkeletonFinder() {}
 
-    void setup(ofMatrix4x4* transformMatrix, ofxGui &gui);
-    void run();
+    void initGUI(ofxGui& gui);
+    void setTransformMatrix(ofMatrix4x4* mat);
+    void update(nuitrack::SkeletonData::Ptr data);
 
     void updateSensorBox(int & value);
     
@@ -98,18 +70,14 @@ public:
     void drawSkeletons2d(ofRectangle _rect);
     void drawSkeletons();
 
-    //vector<Skeleton> getSkeletons();
+    vector<Skeleton> getSkeletons();
     
 private:
-
-    void initNuitrack();
-    void initGUI(ofxGui& gui);
 
     ofxnui::TrackerRef tracker;
     vector<Skeleton> skeletons;
 
     ofMatrix4x4* transformMatrix;
-    void update(nuitrack::SkeletonData::Ptr data);
 
 public:
     ofxGuiPanel *panel;
