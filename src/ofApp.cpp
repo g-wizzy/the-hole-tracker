@@ -561,9 +561,9 @@ void ofApp::draw(){
     //ofLogNotice() << "draw next frame";
     if(bShowVisuals){
         //Draw viewport previews
-		// TODO: basic rgb & depth streams
-		
-
+		pointCloudManager.drawRGB(viewGrid[0]);
+		pointCloudManager.drawDepth(viewGrid[1]);
+		// TODO: These might all be useless
         //skeletonFinder.grayImage.draw(viewGrid[2]);
         //skeletonFinder.contourFinder.draw(viewGrid[3]);
         //skeletonFinder.maskFbo.draw(viewGrid[4]);
@@ -571,13 +571,11 @@ void ofApp::draw(){
         
         switch (iMainCamera) {
             case 0:
-				// TODO
-				//realSense->drawDepthStream(viewMain);
+				pointCloudManager.drawRGB(viewMain);
                 drawCalibrationPoints();
                 break;
             case 1:
-				// TODO
-				//realSense->drawInfraLeftStream(viewMain);
+				pointCloudManager.drawDepth(viewMain);
                 drawCalibrationPoints();
                 break;
             case 2:
@@ -668,7 +666,7 @@ void ofApp::drawPreview() {
 	ofMultMatrix(deviceTransform);
 	if (bPreviewPointCloud) {
 		// TODO: what does this do
-		pointCloudManager.draw();
+		pointCloudManager.drawPointCloud();
 	}
 	ofFill();
 	ofSetColor(255, 0, 0);
@@ -732,7 +730,7 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 	ofPushMatrix();
 	ofMultMatrix(deviceTransform);
 	//realSense->draw();
-	pointCloudManager.draw();
+	pointCloudManager.drawPointCloud();
 	ofPopMatrix();
 	
 	shader.end();
