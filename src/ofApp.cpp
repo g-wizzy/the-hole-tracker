@@ -98,10 +98,10 @@ void ofApp::setupTransformGui() {
 void ofApp::reloadTransformMatrix() {
 	guitransform->loadFromFile("transformation.xml");
 
-	deviceTransform = transformation.get().getInverse();
+	deviceToWorldTransform = transformation.get().getInverse();
 
-	auto d = deviceTransform.getPtr();
-	ofLog(OF_LOG_NOTICE) << "Loaded new transform matrix :"
+	auto d = deviceToWorldTransform.getPtr();
+	ofLog(OF_LOG_NOTICE) << "Loaded new transform matrix (device to world):"
 		<< "\n" << d[0] << " " << d[1] << " " << d[2] << " " << d[3]
 		<< "\n" << d[4] << " " << d[5] << " " << d[6] << " " << d[7]
 		<< "\n" << d[8] << " " << d[9] << " " << d[10] << " " << d[11]
@@ -111,7 +111,7 @@ void ofApp::reloadTransformMatrix() {
 void ofApp::setup(){
 	ofLog(OF_LOG_NOTICE) << "Nuitrack setup started";
 	initNuitrack();
-	skeletonFinder.setTransformMatrix(&deviceTransform);
+	skeletonFinder.setTransformMatrix(&deviceToWorldTransform);
 	ofLog(OF_LOG_NOTICE) << "Nuitrack setup ended";
 
 	// we don't want to be running too fast

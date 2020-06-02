@@ -125,10 +125,8 @@ public:
             
     // used for viewing the point cloud
     ofEasyCam previewCam;
-    
-    ofVboMesh geometry;
-        
-    ofMatrix4x4 deviceTransform;
+            
+    ofMatrix4x4 deviceToWorldTransform;
     
     bool bShowSkeletonData = true;
 
