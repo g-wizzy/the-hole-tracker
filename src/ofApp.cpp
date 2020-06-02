@@ -495,23 +495,19 @@ void ofApp::updateMatrix(){
 }
 
 //--------------------------------------------------------------
-glm::vec3 ofApp::calcPlanePoint(ofParameter<ofVec2f> & cpoint, int _size, int _step){
-	//ofLog(OF_LOG_NOTICE) << "Entered calcPlanePoint";
+glm::vec3 ofApp::calcPlanePoint(ofParameter<ofVec2f> & cpoint, int size, int step){
 	glm::vec3 ppoint;
 
 	// TODO: these values are in nuitrack.config
 	int width = 640;// realSense->getDepthWidth();
 	int height = 480;// realSense->getDepthHeight();
    
-    int size = _size;
-    int step = _step;
-    float factor;
     int counter = 0;
     
-    int minX = ((cpoint.get().x - size) >= 0)?(cpoint.get().x - 1): 0;
-    int minY = ((cpoint.get().y - size) >= 0)?(cpoint.get().y - 1): 0;
-    int maxY = ((cpoint.get().y + size) < cpoint.getMax().y)?(cpoint.get().y + size): cpoint.getMax().y - 1;
-    int maxX = ((cpoint.get().x + size) < cpoint.getMax().x)?(cpoint.get().x + size): cpoint.getMax().x - 1;
+    int minX = ((cpoint.get().x - size) > 0)?(cpoint.get().x - size): 0;
+    int minY = ((cpoint.get().y - size) > 0)?(cpoint.get().y - size): 0;
+    int maxY = ((cpoint.get().y + size) < height)?(cpoint.get().y + size): height - 1;
+    int maxX = ((cpoint.get().x + size) < width)?(cpoint.get().x + size): width - 1;
       
     float corrDistance;
 
