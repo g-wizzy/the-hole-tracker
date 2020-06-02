@@ -58,8 +58,6 @@ struct Bone {
 class SkeletonFinder {
     
 public:
-    SkeletonFinder() {}
-
     void initGUI(ofxGui& gui);
     void setTransformMatrix(ofMatrix4x4* mat);
     void update(nuitrack::SkeletonData::Ptr data);
@@ -69,6 +67,8 @@ public:
     void drawSensorBox();
     void drawSkeletons2d(ofRectangle _rect);
     void drawSkeletons();
+
+    string getShortDesc();
 
     vector<Skeleton> getSkeletons();
     

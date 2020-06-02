@@ -45,8 +45,7 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 		vector<Joint> joints;
 		for (nuitrack::Joint joint : skel.joints) {
 			glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
-			// pos = *transformMatrix * pos;
-			pos = 0.001 * pos;
+			pos = *transformMatrix * (ofVec3f)pos;
 
 			joints.push_back(Joint(joint.type, joint.confidence, pos));
 		}
@@ -118,6 +117,22 @@ void SkeletonFinder::drawSkeletons() {
 
 			ofDrawLine(j1.pos, j2.pos);
 		}
+	}
+}
+
+string SkeletonFinder::getShortDesc()
+{
+	if (skeletons.size() == 0) {
+		return "No skeleton found";
+	} else {
+		ostringstream s;
+		Skeleton skel = skeletons[0];
+		auto pos = skel.joints[nuitrack::JOINT_HEAD].pos;
+		s << "Head position : (" <<
+			pos.x << ", " <<
+			pos.y << ", " <<
+			pos.z << ")";
+		return s.str();
 	}
 }
 
