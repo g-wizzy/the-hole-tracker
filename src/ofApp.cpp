@@ -21,6 +21,15 @@ ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
 const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
 
 
+// TODO: remove
+void debug_mat(glm::mat4 mat) {
+	ofLog(OF_LOG_NOTICE) << "MATRIX : \n"
+		<< mat[0][0] << " " << mat[1][0] << " " << mat[2][0] << " " << mat[3][0] << "\n"
+		<< mat[0][1] << " " << mat[1][1] << " " << mat[2][1] << " " << mat[3][1] << "\n"
+		<< mat[0][2] << " " << mat[1][2] << " " << mat[2][2] << " " << mat[3][2] << "\n"
+		<< mat[0][3] << " " << mat[1][3] << " " << mat[2][3] << " " << mat[3][3] << "\n";
+}
+
 //--------------------------------------------------------------
 void ofApp::initNuitrack() {
 	tracker = ofxnui::Tracker::create();
@@ -69,9 +78,6 @@ void ofApp::initNuitrack() {
 		});
 
 	pointCloudManager.setDepthSensor(tracker->depthTracker);
-
-	// TODO: maybe account for this, that used to be in old code :
-	// realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
 }
 
 void ofApp::initViewports() {
@@ -107,6 +113,11 @@ void ofApp::setupTransformGui() {
 	transformationGuiGroup.add(transformation.set("Transform", ofMatrix4x4()));
 	guitransform->addGroup(transformationGuiGroup);
 
+	// The GUI apparently cannot display matrices
+	// Also the method apparently requires a reference for some reason
+	bool visible = false;
+	guitransform->setVisible(visible);
+
 	reloadTransformMatrix();
 }
 
@@ -122,36 +133,21 @@ void ofApp::setup(){
 	ofLog(OF_LOG_NOTICE) << "Nuitrack setup started";
 	initNuitrack();
 	skeletonFinder.setTransformMatrix(&deviceToWorldTransform);
-	ofLog(OF_LOG_NOTICE) << "Nuitrack setup ended";
-
-	// we don't want to be running too fast
-	//ofSetVerticalSync(true);
-	//ofSetFrameRate(30);
 
 	ofLog(OF_LOG_NOTICE) << "Viewport setup started";
 	initViewports();
-	ofLog(OF_LOG_NOTICE) << "Viewport setup ended";
 
-	ofLog(OF_LOG_NOTICE) << "Loading transformation GUI";
+	ofLog(OF_LOG_NOTICE) << "Loading GUI";
 	setupTransformGui();
-
-    ////////////////////////
-    //    Nuitrack        // 
-    ////////////////////////
+	skeletonFinder.initGUI(gui);
 
 	ofLog(OF_LOG_NOTICE) << "MainAPP: starting attached Device...";
-
 	tracker->run();
 
-	ofLog(OF_LOG_NOTICE) << "...starting attached Device done.";
-
-    /////////////////
-	// creating preview point cloud is bogging the system down, so switched off at startup
 	bPreviewPointCloud = false;
     
 	ofLog(OF_LOG_NOTICE) << "MainAPP: setting up networking...";
 	networkMng.setup(gui, "TODO: remove useless arg");
-	ofLog(OF_LOG_NOTICE) << "...networking done.";
 
     setupViewports();
     createHelp();
@@ -167,9 +163,11 @@ void ofApp::setup(){
 void ofApp::setupViewports(){
 	//call here whenever we resize the window
 	// TODO: update UI
-	networkMng.panel->setWidth(MENU_WIDTH / 4);
+	skeletonFinder.panel->setWidth(MENU_WIDTH / 2);
+	networkMng.panel->setWidth(MENU_WIDTH / 2);
 
-	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 4, 20);
+	skeletonFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
+	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 }
 
 //--------------------------------------------------------------
@@ -177,15 +175,15 @@ void ofApp::update(){
 	tracker->poll();
 	ofBackground(100, 100, 100);
 
-	//networkMng.update(skeletonFinder, realSenseFrustum, transformation.get());
+	networkMng.update(skeletonFinder);
 }
 
 //--------------------------------------------------------------
-void ofApp::draw(){
+void ofApp::draw() {
 	ofSetColor(255, 255, 255);
 
     if(bShowVisuals){
-        //Draw viewport previews
+        // Draw viewport previews
 		pointCloudManager.drawRGB(viewGrid[0]);
 		pointCloudManager.drawDepth(viewGrid[1]);
 		if (iMainCamera != 2) { // make sure the camera is drawn only once (so the interaction with the mouse works)
@@ -214,6 +212,7 @@ void ofApp::draw(){
 
         glDisable(GL_DEPTH_TEST);
         ofPushStyle();
+
         // Highlight background of selected camera
         ofSetColor(255, 0, 255, 255);
         ofNoFill();
@@ -229,10 +228,10 @@ void ofApp::draw(){
     }
 	if (bShowSkeletonData) {
 		string desc = skeletonFinder.getShortDesc();
-		//ofLog(OF_LOG_NOTICE) << desc;
-		//ofDrawBitmapString(desc,
-		//	20,
-		//	VIEWPORT_HEIGHT + 20);
+		ofLog(OF_LOG_NOTICE) << desc;
+		ofDrawBitmapString(desc,
+			20,
+			VIEWPORT_HEIGHT + 20);
 	}
 
     ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), ofGetWidth() - 200, 10);
@@ -262,12 +261,12 @@ void ofApp::drawPreview() {
 	
     ofSetColor(255, 255, 0);
     skeletonFinder.drawSensorBox();
-
+	
 	glLineWidth(5);
     ofSetColor(255, 100, 255);
 	skeletonFinder.drawSkeletons();
     
-	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);  
 }
 
 //--------------------------------------------------------------
