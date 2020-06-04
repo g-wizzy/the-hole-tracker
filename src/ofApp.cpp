@@ -259,13 +259,15 @@ void ofApp::drawPreview() {
 	//sphere_Y.draw();
 	//sphere_Z.draw();
 	
+	ofPushStyle();
     ofSetColor(255, 255, 0);
     skeletonFinder.drawSensorBox();
 	
 	glLineWidth(5);
     ofSetColor(255, 100, 255);
 	skeletonFinder.drawSkeletons();
-    
+	ofPopStyle();
+
 	glDisable(GL_DEPTH_TEST);  
 }
 
