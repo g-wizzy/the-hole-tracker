@@ -65,8 +65,6 @@ void PointCloudManager::updateDepth(DepthFrame::Ptr data)
 void PointCloudManager::createPointCloudIfNotExist(glm::vec2 dim)
 {
 	if (pointCloud.getVertices().size() == 0) {
-		ofLog(OF_LOG_NOTICE) << "YOU ONLY SEE THIS ONCE";
-
 		pointCloud.setMode(OF_PRIMITIVE_POINTS);
 		pointCloud.enableColors();
 

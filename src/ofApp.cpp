@@ -20,16 +20,6 @@ ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
 
 const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
 
-
-// TODO: remove
-void debug_mat(glm::mat4 mat) {
-	ofLog(OF_LOG_NOTICE) << "MATRIX : \n"
-		<< mat[0][0] << " " << mat[1][0] << " " << mat[2][0] << " " << mat[3][0] << "\n"
-		<< mat[0][1] << " " << mat[1][1] << " " << mat[2][1] << " " << mat[3][1] << "\n"
-		<< mat[0][2] << " " << mat[1][2] << " " << mat[2][2] << " " << mat[3][2] << "\n"
-		<< mat[0][3] << " " << mat[1][3] << " " << mat[2][3] << " " << mat[3][3] << "\n";
-}
-
 //--------------------------------------------------------------
 void ofApp::initNuitrack() {
 	tracker = ofxnui::Tracker::create();
@@ -226,10 +216,9 @@ void ofApp::draw() {
     if(bShowHelp) {
         ofDrawBitmapString(help, 20 ,VIEWPORT_HEIGHT + 50);
     }
+
 	if (bShowSkeletonData) {
-		string desc = skeletonFinder.getShortDesc();
-		ofLog(OF_LOG_NOTICE) << desc;
-		ofDrawBitmapString(desc,
+		ofDrawBitmapString(skeletonFinder.getShortDesc(),
 			20,
 			VIEWPORT_HEIGHT + 20);
 	}
