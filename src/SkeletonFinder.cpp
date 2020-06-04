@@ -59,7 +59,7 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 	}
 }
 
-vector<Skeleton> SkeletonFinder::getSkeletons() {
+vector<Skeleton> SkeletonFinder::getSkeletons() const {
 	return skeletons;
 }
 

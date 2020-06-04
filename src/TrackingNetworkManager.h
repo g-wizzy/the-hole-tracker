@@ -31,26 +31,16 @@
 
 class TrackingNetworkManager {
     
-public:
-    TrackingNetworkManager();
-    
-    void setup(ofxGui &gui, string _kinectSerial);
-    void update(SkeletonFinder & _SkeletonFinder, Frustum & _frustum, ofMatrix4x4 _trans);
+public:    
+    void setup(ofxGui &gui, string _realsenseSerial);
+    void update(const SkeletonFinder& skeletonFinder);
 
-    void sendTrackingData(SkeletonFinder & _SkeletonFinder);
-
-    void sendCalibFrustum(Frustum & _frustum, string ip, int port);
-    void sendCalibTrans(ofMatrix4x4 & _trans, string _ip, int _port);
-    void sendCalibSensorBox(SkeletonFinder & _SkeletonFinder, string _ip, int _port);
-    void sendGazePoint(SkeletonFinder & _SkeletonFinder, string _ip, int _port);
+    void sendTrackingData(const SkeletonFinder& skeletonFinder);
+    void sendSkeletonData(const Skeleton& skeleton);
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);
     void checkTrackingClients(long _currentMillis);
     int getTrackingClientIndex(string _ip, int _port);
-
-    void listenerString(string & _string);
-    void listenerInt(int & _int);
-    void listenerBool(bool & _bool);
 
     void sendBroadCastAddress();
     
@@ -99,12 +89,7 @@ public:
 
     ofParameterGroup streamingGuiGroup;
     
-    ofParameter<bool> streamingBodyBlob;
-    ofParameter<bool> streamingHeadBlob;
-    ofParameter<bool> streamingHead;
-    ofParameter<bool> streamingEye;
-
-
+    ofParameter<bool> streamingWholeBody;
 };
 
 

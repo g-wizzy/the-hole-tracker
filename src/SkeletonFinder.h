@@ -68,7 +68,7 @@ public:
 
     string getShortDesc();
 
-    vector<Skeleton> getSkeletons();
+    vector<Skeleton> getSkeletons() const;
     
 private:
     void updateSensorBox(int & value);
