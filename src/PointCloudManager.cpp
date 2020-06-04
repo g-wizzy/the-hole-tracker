@@ -2,19 +2,8 @@
 
 void PointCloudManager::drawPointCloud()
 {
-	//ofLog(OF_LOG_NOTICE) << "Drawing cloud point (" << pointCloud.getVertices().size() << ") points)";
-	ofPushMatrix();
 	ofNoFill();
 	pointCloud.draw();
-	auto vs = pointCloud.getVertices();
-	if (vs.size() > 0) {
-		auto v = vs[12000];
-		ofLog(OF_LOG_NOTICE) << "Color at vertex 12000 (of " << vs.size() << "): \n"
-			<< "R " << v.r << "\n"
-			<< "G " << v.g << "\n"
-			<< "B " << v.b;
-	}
-	ofPopMatrix();
 }
 
 void PointCloudManager::drawRGB(const ofRectangle& viewRect) {
@@ -68,7 +57,7 @@ void PointCloudManager::updateDepth(DepthFrame::Ptr data)
 
 			const unsigned short d = depthData[index];
 			Vector3 v = depthSensor->convertProjToRealCoords(x, y, depthData[index]);
-			pointCloud.setVertex(skippedIndex, ofxnui::Tracker::fromVector3(v) * 0.001);
+			pointCloud.setVertex(skippedIndex, ofxnui::Tracker::fromVector3(v));
 		}
 	}
 }

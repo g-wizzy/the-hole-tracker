@@ -1,7 +1,7 @@
 //
 //  SkeletonFinder.cpp
 //
-//  Created by Pierre Bürki on 19.05.20.
+//  Created by Pierre Bï¿½rki on 19.05.20.
 //  Adapted from BlobFinder.cpp by maybites (14.02.14).
 //
 
@@ -14,8 +14,6 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	panel->loadTheme("theme/theme_light.json");
 	panel->setName("Tracking...");
 
-	// TODO: consider adding nuitrack params
-
 	sensorBoxLeft.addListener(this, &SkeletonFinder::updateSensorBox);
 	sensorBoxRight.addListener(this, &SkeletonFinder::updateSensorBox);
 	sensorBoxFront.addListener(this, &SkeletonFinder::updateSensorBox);
@@ -24,6 +22,7 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	sensorBoxBottom.addListener(this, &SkeletonFinder::updateSensorBox);
 
 	sensorBoxGuiGroup = panel->addGroup("SensorBox");
+	sensorBoxGuiGroup->add(filtering.set("Filtering", true));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxLeft.set("left", 1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxRight.set("right", -1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxFront.set("front", 1000));
@@ -45,17 +44,22 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 		vector<Joint> joints;
 		for (nuitrack::Joint joint : skel.joints) {
 			glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
-			// pos = *transformMatrix * pos;
-			pos = 0.001 * pos;
+
+			// ofMatrix multiplication works in reverse
+			pos = (ofVec3f)pos * *transformMatrix;
 
 			joints.push_back(Joint(joint.type, joint.confidence, pos));
 		}
 
-		skeletons.push_back(Skeleton(skel.id, joints));
+		Skeleton skeleton(skel.id, joints);
+		if (!filtering.get() || isSkeletonInBounds(skeleton)) {
+			skeletons.push_back(skeleton);
+		}
+
 	}
 }
 
-vector<Skeleton> SkeletonFinder::getSkeletons() {
+vector<Skeleton> SkeletonFinder::getSkeletons() const {
 	return skeletons;
 }
 
@@ -121,6 +125,22 @@ void SkeletonFinder::drawSkeletons() {
 	}
 }
 
+string SkeletonFinder::getShortDesc()
+{
+	if (skeletons.size() == 0) {
+		return "No skeleton found";
+	} else {
+		ostringstream s;
+		Skeleton skel = skeletons[0];
+		auto pos = skel.joints[nuitrack::JOINT_HEAD].pos;
+		s << "Head position : (" <<
+			pos.x << ", " <<
+			pos.y << ", " <<
+			pos.z << ")";
+		return s.str();
+	}
+}
+
 void SkeletonFinder::updateSensorBox(int& value) {
 	sensorBox.clear();
 	sensorBox.setMode(OF_PRIMITIVE_LINES);
@@ -152,4 +172,14 @@ void SkeletonFinder::updateSensorBox(int& value) {
 	//captureCam.setPosition((sensorBoxLeft.get() * SCALE + sensorBoxRight.get() * SCALE)/2, (sensorBoxBack.get() * SCALE + sensorBoxBack.get() * SCALE)/2, sensorBoxTop.get() * SCALE);
 	//captureCam.setPosition(5, 5, 0);
 	//captureCam.
+}
+
+bool SkeletonFinder::isSkeletonInBounds(const Skeleton& skel) {
+	glm::vec3 headPos = skel.joints[nuitrack::JOINT_HEAD].pos;
+	return headPos.x < sensorBoxLeft.get() * SCALE
+		&& headPos.x > sensorBoxRight.get() * SCALE
+		&& headPos.y < sensorBoxFront.get()* SCALE
+		&& headPos.y > sensorBoxBack.get() * SCALE
+		&& headPos.z < sensorBoxTop.get()* SCALE
+		&& headPos.z > sensorBoxBottom.get() * SCALE;
 }
