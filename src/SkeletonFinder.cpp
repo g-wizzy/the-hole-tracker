@@ -1,7 +1,7 @@
 //
 //  SkeletonFinder.cpp
 //
-//  Created by Pierre Bürki on 19.05.20.
+//  Created by Pierre Bï¿½rki on 19.05.20.
 //  Adapted from BlobFinder.cpp by maybites (14.02.14).
 //
 
@@ -13,8 +13,6 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 
 	panel->loadTheme("theme/theme_light.json");
 	panel->setName("Tracking...");
-
-	// TODO: consider adding nuitrack params
 
 	sensorBoxLeft.addListener(this, &SkeletonFinder::updateSensorBox);
 	sensorBoxRight.addListener(this, &SkeletonFinder::updateSensorBox);
@@ -45,7 +43,9 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 		vector<Joint> joints;
 		for (nuitrack::Joint joint : skel.joints) {
 			glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
-			pos = *transformMatrix * (ofVec3f)pos;
+
+			// ofMatrix multiplication works in reverse
+			pos = (ofVec3f)pos * *transformMatrix;
 
 			joints.push_back(Joint(joint.type, joint.confidence, pos));
 		}

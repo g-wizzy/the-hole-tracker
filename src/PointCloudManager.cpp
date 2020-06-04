@@ -57,7 +57,7 @@ void PointCloudManager::updateDepth(DepthFrame::Ptr data)
 
 			const unsigned short d = depthData[index];
 			Vector3 v = depthSensor->convertProjToRealCoords(x, y, depthData[index]);
-			pointCloud.setVertex(skippedIndex, ofxnui::Tracker::fromVector3(v) * 0.001);
+			pointCloud.setVertex(skippedIndex, ofxnui::Tracker::fromVector3(v));
 		}
 	}
 }

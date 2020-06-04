@@ -127,6 +127,7 @@ public:
     ofEasyCam previewCam;
             
     ofMatrix4x4 deviceToWorldTransform;
+    ofMatrix4x4 worldToDeviceTransform;
     
     bool bShowSkeletonData = true;
 
@@ -138,9 +139,7 @@ public:
     ofxGui gui;
     
 	ofxGuiPanel *guitransform;
- 
 	ofParameterGroup transformationGuiGroup;
-
     ofParameter<ofMatrix4x4> transformation;
     
     //////////
@@ -152,5 +151,7 @@ public:
 
     void createHelp();
 
+private:
+    const static ofMatrix4x4 nuitrackViewportToRealSenseViewportTransform;
+    static ofMatrix4x4 makeNuitrackToRealSenseTransform();
 };
-

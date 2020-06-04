@@ -5,6 +5,21 @@
 #define DEPTH_X_RES 640
 #define DEPTH_Y_RES 480
 
+ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
+	// Thankfully this matrix is symmetric, so we need not worry about the row-major-ness
+	// of the matrix object
+	float mat[16] = {
+		1e-3,  0,    0,    0,
+		0,    -1e-3, 0,    0,
+		0,     0,    1e-3, 0,
+		0,     0,    0,    1
+	};
+	// TODO: add scaling
+	return glm::make_mat4x4(mat);
+}
+
+const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
+
 
 //--------------------------------------------------------------
 void ofApp::initNuitrack() {
@@ -98,14 +113,9 @@ void ofApp::setupTransformGui() {
 void ofApp::reloadTransformMatrix() {
 	guitransform->loadFromFile("transformation.xml");
 
-	deviceToWorldTransform = transformation.get().getInverse();
-
-	auto d = deviceToWorldTransform.getPtr();
-	ofLog(OF_LOG_NOTICE) << "Loaded new transform matrix (device to world):"
-		<< "\n" << d[0] << " " << d[1] << " " << d[2] << " " << d[3]
-		<< "\n" << d[4] << " " << d[5] << " " << d[6] << " " << d[7]
-		<< "\n" << d[8] << " " << d[9] << " " << d[10] << " " << d[11]
-		<< "\n" << d[12] << " " << d[13] << " " << d[14] << " " << d[15];
+	// ofMatrices multiplication works in reverse
+	worldToDeviceTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
+	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 }
 
 void ofApp::setup(){
@@ -234,15 +244,14 @@ void ofApp::drawPreview() {
 	glPointSize(4);
 	glEnable(GL_DEPTH_TEST);
 
-	ofPushMatrix();
-
     //This moves the crossingpoint of the kinect center line and the plane to the center of the stage
     //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
-	ofMultMatrix(transformation.get().getInverse());
 	if (bPreviewPointCloud) {
+		ofPushMatrix();
+		ofMultMatrix(worldToDeviceTransform);
 		pointCloudManager.drawPointCloud();
+		ofPopMatrix();
 	}
-	ofPopMatrix();
 
 	// TODO: draw base
 	//ofFill();
@@ -251,18 +260,14 @@ void ofApp::drawPreview() {
 	//sphere_Y.draw();
 	//sphere_Z.draw();
 	
-	ofPushMatrix();
-
     ofSetColor(255, 255, 0);
     skeletonFinder.drawSensorBox();
 
-    ofNoFill();
 	glLineWidth(5);
     ofSetColor(255, 100, 255);
 	skeletonFinder.drawSkeletons();
     
 	glDisable(GL_DEPTH_TEST);
-	ofPopMatrix();  
 }
 
 //--------------------------------------------------------------
