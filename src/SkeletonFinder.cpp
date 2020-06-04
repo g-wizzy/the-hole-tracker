@@ -22,6 +22,7 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	sensorBoxBottom.addListener(this, &SkeletonFinder::updateSensorBox);
 
 	sensorBoxGuiGroup = panel->addGroup("SensorBox");
+	sensorBoxGuiGroup->add(filtering.set("Filtering", true));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxLeft.set("left", 1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxRight.set("right", -1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxFront.set("front", 1000));
@@ -50,7 +51,11 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 			joints.push_back(Joint(joint.type, joint.confidence, pos));
 		}
 
-		skeletons.push_back(Skeleton(skel.id, joints));
+		Skeleton skeleton(skel.id, joints);
+		if (!filtering.get() || isSkeletonInBounds(skeleton)) {
+			skeletons.push_back(skeleton);
+		}
+
 	}
 }
 
@@ -167,4 +172,14 @@ void SkeletonFinder::updateSensorBox(int& value) {
 	//captureCam.setPosition((sensorBoxLeft.get() * SCALE + sensorBoxRight.get() * SCALE)/2, (sensorBoxBack.get() * SCALE + sensorBoxBack.get() * SCALE)/2, sensorBoxTop.get() * SCALE);
 	//captureCam.setPosition(5, 5, 0);
 	//captureCam.
+}
+
+bool SkeletonFinder::isSkeletonInBounds(const Skeleton& skel) {
+	glm::vec3 headPos = skel.joints[nuitrack::JOINT_HEAD].pos;
+	return headPos.x < sensorBoxLeft.get() * SCALE
+		&& headPos.x > sensorBoxRight.get() * SCALE
+		&& headPos.y < sensorBoxFront.get()* SCALE
+		&& headPos.y > sensorBoxBack.get() * SCALE
+		&& headPos.z < sensorBoxTop.get()* SCALE
+		&& headPos.z > sensorBoxBottom.get() * SCALE;
 }

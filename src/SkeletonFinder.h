@@ -61,8 +61,6 @@ public:
     void initGUI(ofxGui& gui);
     void setTransformMatrix(ofMatrix4x4* mat);
     void update(nuitrack::SkeletonData::Ptr data);
-
-    void updateSensorBox(int & value);
     
     void drawSensorBox();
     void drawSkeletons2d(ofRectangle _rect);
@@ -73,6 +71,8 @@ public:
     vector<Skeleton> getSkeletons();
     
 private:
+    void updateSensorBox(int & value);
+    bool isSkeletonInBounds(const Skeleton& skel);
 
     ofxnui::TrackerRef tracker;
     vector<Skeleton> skeletons;
@@ -83,6 +83,7 @@ public:
     ofxGuiPanel *panel;
 	ofxGuiGroup *sensorBoxGuiGroup;
 
+    ofParameter<bool> filtering;
     ofParameter<int> sensorBoxLeft;
     ofParameter<int> sensorBoxRight;
     ofParameter<int> sensorBoxTop;
