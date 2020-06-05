@@ -66,6 +66,51 @@ void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
     
     // OSC receiver queues up new messages, so you need to iterate
 	// through waiting messages to get each incoming message
+	// check for waiting messages
+	while (serverReceiver.hasWaitingMessages()) {
+		// get the next message
+		ofxOscMessage m;
+		serverReceiver.getNextMessage(m);
+		//Log received message for easier debugging of participants' messages:
+		ofLog(OF_LOG_NOTICE) << "Server recvd msg " << getOscMsgAsString(m)
+			<< "\n\tfrom " << m.getRemoteIp();
+
+		// check the address of the incoming message
+		if (m.getAddress() == "/ks/request/handshake") {
+			//Identify host of incoming msg
+			string incomingHost = m.getRemoteIp();
+			//See if incoming host is a new one:
+			// get the first argument (listeningport) as an int
+			if (m.getNumArgs() == 1 && m.getArgType(0) == OFXOSC_TYPE_INT32) {
+				knownClients[getTrackingClientIndex(incomingHost, m.getArgAsInt32(0))].update(currentMillis);
+			}
+			else {
+				ofLog(OF_LOG_WARNING) << "Server recvd malformed message."
+					<< "\n\tExpected: /ks/request/handshake <ClientListeningPort>"
+					<< "\n\tReceived: " << getOscMsgAsString(m)
+					<< "\n\tfrom " << incomingHost;
+			}
+		}
+		else if (m.getAddress() == "/ks/request/update") {
+			//Identify host of incoming msg
+			string incomingHost = m.getRemoteIp();
+			//See if incoming host is a new one:
+			// get the first argument (listeningport) as an int
+			if (m.getNumArgs() == 1 && m.getArgType(0) == OFXOSC_TYPE_INT32) {
+				knownClients[getTrackingClientIndex(incomingHost, m.getArgAsInt32(0))].update(currentMillis);
+			}
+			else {
+				ofLog(OF_LOG_WARNING) << "Server recvd malformed message."
+					<< "\n\tExpected: /ks/request/update <ClientListeningPort>"
+					<< "\n\tReceived: " << getOscMsgAsString(m)
+					<< "\n\tfrom " + incomingHost;
+			}
+		}
+		// handle getting random OSC messages here
+		else {
+			ofLogWarning("Server got weird message: " + m.getAddress());
+		}
+	}
     
 	//this is purely workaround for a mysterious OSCpack bug on 64bit linux
 	// after startup, reinit the receivers
@@ -83,6 +128,7 @@ void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFind
 	frame.addIntArg(frameNumber);
 	sendMessageToTrackingClients(frame);
 
+
 	vector<Skeleton> skeletons = skeletonFinder.getSkeletons();
 	if (skeletons.size() > 0) {
 		// Only one skeleton is to be on the scene for the perspective to work
@@ -91,18 +137,24 @@ void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFind
 }
 
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
+	ofxOscMessage skeletonMsg;
+	skeletonMsg.setAddress("/ks/server/track/skeleton");
 	if (streamingWholeBody.get()) {
-		ofxOscMessage skeletonMsg;
-		skeletonMsg.setAddress("/ks/server/track/skeleton");
 		for (auto joint = skel.joints.begin(); joint != skel.joints.end(); ++joint) {
 			skeletonMsg.addFloatArg(joint->pos.x);
 			skeletonMsg.addFloatArg(joint->pos.y);
 			skeletonMsg.addFloatArg(joint->pos.z);
 			skeletonMsg.addFloatArg(joint->confidence);
 		}
-
-		sendMessageToTrackingClients(skeletonMsg);
+	} else {
+		Joint head = skel.joints[nuitrack::JOINT_HEAD];
+		skeletonMsg.addFloatArg(head.pos.x);
+		skeletonMsg.addFloatArg(head.pos.y);
+		skeletonMsg.addFloatArg(head.pos.z);
+		skeletonMsg.addFloatArg(head.confidence);
 	}
+
+	sendMessageToTrackingClients(skeletonMsg);
 }
 
 void TrackingNetworkManager::sendMessageToTrackingClients(ofxOscMessage _msg){
