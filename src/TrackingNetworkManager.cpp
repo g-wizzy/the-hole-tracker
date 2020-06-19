@@ -134,12 +134,14 @@ void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFind
 		// Only one skeleton is to be on the scene for the perspective to work
 		sendSkeletonData(skeletons[0]);
 	}
+	// TODO: send warning when more than one skeleton
 }
 
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 	ofxOscMessage skeletonMsg;
-	skeletonMsg.setAddress("/ks/server/track/skeleton");
 	if (streamingWholeBody.get()) {
+		skeletonMsg.setAddress("/ks/server/track/skeleton/whole");
+		skeletonMsg.addIntArg(mServerID.get());
 		for (auto joint = skel.joints.begin(); joint != skel.joints.end(); ++joint) {
 			skeletonMsg.addFloatArg(joint->pos.x);
 			skeletonMsg.addFloatArg(joint->pos.y);
@@ -147,6 +149,8 @@ void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 			skeletonMsg.addFloatArg(joint->confidence);
 		}
 	} else {
+		skeletonMsg.setAddress("/ks/server/track/skeleton/head");
+		skeletonMsg.addIntArg(mServerID.get());
 		Joint head = skel.joints[nuitrack::JOINT_HEAD];
 		skeletonMsg.addFloatArg(head.pos.x);
 		skeletonMsg.addFloatArg(head.pos.y);

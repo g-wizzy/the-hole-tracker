@@ -25,13 +25,17 @@ void ofApp::initNuitrack() {
 	tracker = ofxnui::Tracker::create();
 	tracker->init("");
 
+	const char* dist = "7000";
+
 	// depth feed settings
 	tracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
 	tracker->setConfigValue("Realsense2Module.Depth.RawWidth", "1280");
 	tracker->setConfigValue("Realsense2Module.Depth.RawHeight", "720");
 	tracker->setConfigValue("Realsense2Module.Depth.ProcessWidth", "1280");
 	tracker->setConfigValue("Realsense2Module.Depth.ProcessHeight", "720");
-	tracker->setConfigValue("Realsense2Module.Depth.ProcessMaxDepth", "7000");
+	ofLog(OF_LOG_NOTICE) << "before : " << tracker->getConfigValue("Realsense2Module.Depth.ProcessMaxDepth");
+	tracker->setConfigValue("Realsense2Module.Depth.ProcessMaxDepth", dist);
+	ofLog(OF_LOG_NOTICE) << "after  : " << tracker->getConfigValue("Realsense2Module.Depth.ProcessMaxDepth");
 
 	// rgb feed settings
 	tracker->setConfigValue("Realsense2Module.RGB.FPS", "30");
@@ -43,13 +47,16 @@ void ofApp::initNuitrack() {
 	// feeds alignement
 	tracker->setConfigValue("DepthProvider.Depth2ColorRegistration", "true");
 
-	// post processing settings
-	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_alpha", "0.1");
-	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
+	//tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_alpha", "0.1");
+	//tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
+	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.DownsampleFactor", "2");
 
 	// distance settings
-	tracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
-	tracker->setConfigValue("Skeletonization.MaxDistance", "7000");
+	tracker->setConfigValue("Segmentation.MAX_DISTANCE", dist);
+	tracker->setConfigValue("Skeletonization.MaxDistance", dist);
+
+	tracker->setConfigValue("Settings.DepthMapSmoothing", "true");
+	tracker->setConfigValue("Settings.SkeletonSmoothing", "true");
 
 	tracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
 		auto issue = data->getIssue<nuitrack::Issue>();
