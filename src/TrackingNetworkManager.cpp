@@ -135,6 +135,8 @@ void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 	ofxOscMessage skeletonMsg;
 	skeletonMsg.setAddress("/ks/server/track/skeleton");
 
+	skeletonMsg.addIntArg(mServerID.get());
+
 	Joint head = skel.joints[nuitrack::JOINT_HEAD];
 	skeletonMsg.addFloatArg(head.pos.x);
 	skeletonMsg.addFloatArg(head.pos.y);
