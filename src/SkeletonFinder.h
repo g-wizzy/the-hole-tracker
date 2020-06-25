@@ -8,7 +8,6 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxOpenCv.h"
 #include "ofVec3f.h"
 #include "ofxGuiExtended.h"
 #include "ofConstants.h"
