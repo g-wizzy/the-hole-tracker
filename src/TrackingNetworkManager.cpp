@@ -36,31 +36,14 @@ void TrackingNetworkManager::setup(ofxGui &gui, string _realsenseSerial){
     listeningGroup->add<ofxGuiTextField>(listeningIP.set("RX IP",localAddress));
     listeningGroup->add<ofxGuiIntInputField>(listeningPort.set("RX Port", NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT + 99));
 
-    
-    streamingGuiGroup.setName("Streaming");
-    streamingGuiGroup.add(streamingWholeBody.set("Whole body", true));
-    panel->addGroup(streamingGuiGroup);
-
     panel->loadFromFile("broadcast.xml");
-
-	// TODO: check usefulness
-    frameNumber = 0;
 }
 
 
 //--------------------------------------------------------------
 void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
-    frameNumber++;
-    
     long currentMillis = ofGetElapsedTimeMillis();
-	//Check if its about time to send a broadcast message
-    if(knownClients.size() > 0 && (currentMillis - broadCastTimer) > BROADCAST_CLIENT_FREQ){
-        sendBroadCastAddress();
-        checkTrackingClients(currentMillis);
-    } else if(knownClients.size() == 0 && (currentMillis - broadCastTimer) > BROADCAST_NOCLIENT_FREQ){
-        sendBroadCastAddress();
-    }
-    
+
     //send trackingdata to all connected clients
     sendTrackingData(skeletonFinder);
     
@@ -121,38 +104,33 @@ void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
 }
 
 void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFinder) {
-	// send frame number
-	ofxOscMessage frame;
-	frame.setAddress("/ks/server/track/frame/start");
-	frame.addIntArg(mServerID.get());
-	frame.addIntArg(frameNumber);
-	sendMessageToTrackingClients(frame);
-
-
 	vector<Skeleton> skeletons = skeletonFinder.getSkeletons();
 	if (skeletons.size() > 0) {
 		// Only one skeleton is to be on the scene for the perspective to work
+		if (skeletons.size() > 1) {
+			sendMultipleSkeletonsAlert();
+		}
 		sendSkeletonData(skeletons[0]);
 	}
+}
+
+void TrackingNetworkManager::sendMultipleSkeletonsAlert() {
+	ofxOscMessage alertMsg;
+	alertMsg.setAddress("/ks/server/track/multiple-skeletons");
+	sendMessageToTrackingClients(alertMsg);
 }
 
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 	ofxOscMessage skeletonMsg;
 	skeletonMsg.setAddress("/ks/server/track/skeleton");
-	if (streamingWholeBody.get()) {
-		for (auto joint = skel.joints.begin(); joint != skel.joints.end(); ++joint) {
-			skeletonMsg.addFloatArg(joint->pos.x);
-			skeletonMsg.addFloatArg(joint->pos.y);
-			skeletonMsg.addFloatArg(joint->pos.z);
-			skeletonMsg.addFloatArg(joint->confidence);
-		}
-	} else {
-		Joint head = skel.joints[nuitrack::JOINT_HEAD];
-		skeletonMsg.addFloatArg(head.pos.x);
-		skeletonMsg.addFloatArg(head.pos.y);
-		skeletonMsg.addFloatArg(head.pos.z);
-		skeletonMsg.addFloatArg(head.confidence);
-	}
+
+	skeletonMsg.addIntArg(mServerID.get());
+
+	Joint head = skel.joints[nuitrack::JOINT_HEAD];
+	skeletonMsg.addFloatArg(head.pos.x);
+	skeletonMsg.addFloatArg(head.pos.y);
+	skeletonMsg.addFloatArg(head.pos.z);
+	skeletonMsg.addFloatArg(head.confidence);
 
 	sendMessageToTrackingClients(skeletonMsg);
 }
@@ -188,20 +166,6 @@ int TrackingNetworkManager::getTrackingClientIndex(string _ip, int _port){
 		<< " port:  " + ofToString(_port)
 		<< " knownClients:  " << ofToString(knownClients.size());
     return knownClients.size() -1;
-}
-
-void TrackingNetworkManager::sendBroadCastAddress(){
-    ofxOscMessage broadcast;
-    broadcast.setAddress("/ks/server/broadcast");
-	broadcast.addStringArg(mDeviceSerial);
-	broadcast.addIntArg(mServerID.get());
-	broadcast.addStringArg(listeningIP.get());
-	broadcast.addIntArg(listeningPort.get());
-    
-    broadcastSender.setup(broadcastIP.get(), broadcastPort.get());
-    broadcastSender.sendMessage(broadcast);
-    
-    broadCastTimer = ofGetElapsedTimeMillis();
 }
 
 //--------------------------------------------------------------
