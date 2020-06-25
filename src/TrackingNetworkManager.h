@@ -86,10 +86,6 @@ public:
     ofParameter<int> listeningPort;
 
     ofParameter<int> mServerID;
-
-    ofParameterGroup streamingGuiGroup;
-    
-    ofParameter<bool> streamingWholeBody;
 };
 
 

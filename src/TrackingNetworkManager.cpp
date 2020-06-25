@@ -36,11 +36,6 @@ void TrackingNetworkManager::setup(ofxGui &gui, string _realsenseSerial){
     listeningGroup->add<ofxGuiTextField>(listeningIP.set("RX IP",localAddress));
     listeningGroup->add<ofxGuiIntInputField>(listeningPort.set("RX Port", NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT + 99));
 
-    
-    streamingGuiGroup.setName("Streaming");
-    streamingGuiGroup.add(streamingWholeBody.set("Whole body", true));
-    panel->addGroup(streamingGuiGroup);
-
     panel->loadFromFile("broadcast.xml");
 
 	// TODO: check usefulness
@@ -139,20 +134,12 @@ void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFind
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 	ofxOscMessage skeletonMsg;
 	skeletonMsg.setAddress("/ks/server/track/skeleton");
-	if (streamingWholeBody.get()) {
-		for (auto joint = skel.joints.begin(); joint != skel.joints.end(); ++joint) {
-			skeletonMsg.addFloatArg(joint->pos.x);
-			skeletonMsg.addFloatArg(joint->pos.y);
-			skeletonMsg.addFloatArg(joint->pos.z);
-			skeletonMsg.addFloatArg(joint->confidence);
-		}
-	} else {
-		Joint head = skel.joints[nuitrack::JOINT_HEAD];
-		skeletonMsg.addFloatArg(head.pos.x);
-		skeletonMsg.addFloatArg(head.pos.y);
-		skeletonMsg.addFloatArg(head.pos.z);
-		skeletonMsg.addFloatArg(head.confidence);
-	}
+
+	Joint head = skel.joints[nuitrack::JOINT_HEAD];
+	skeletonMsg.addFloatArg(head.pos.x);
+	skeletonMsg.addFloatArg(head.pos.y);
+	skeletonMsg.addFloatArg(head.pos.z);
+	skeletonMsg.addFloatArg(head.confidence);
 
 	sendMessageToTrackingClients(skeletonMsg);
 }
