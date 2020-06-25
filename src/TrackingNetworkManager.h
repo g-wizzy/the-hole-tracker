@@ -13,7 +13,6 @@
 #include "ofxOsc.h"
 #include "TrackingClient.h"
 #include "SkeletonFinder.h"
-#include "Frustum.h"
 
 #include <cmath>
 #include <regex>
@@ -41,8 +40,6 @@ public:
     void sendMessageToTrackingClients(ofxOscMessage _msg);
     void checkTrackingClients(long _currentMillis);
     int getTrackingClientIndex(string _ip, int _port);
-
-    void sendBroadCastAddress();
     
     string getOscMsgAsString(ofxOscMessage m);
  
@@ -51,10 +48,6 @@ public:
     vector<string>  localIpAddresses;
     
     string          mDeviceSerial;
-    
-    float           scale;
-    
-    long             frameNumber;
     
     //----------------------------------------
     // Server side:
