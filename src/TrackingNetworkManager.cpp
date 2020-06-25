@@ -43,7 +43,7 @@ void TrackingNetworkManager::setup(ofxGui &gui, string _realsenseSerial){
 //--------------------------------------------------------------
 void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
     long currentMillis = ofGetElapsedTimeMillis();
-	    
+
     //send trackingdata to all connected clients
     sendTrackingData(skeletonFinder);
     
@@ -107,8 +107,17 @@ void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFind
 	vector<Skeleton> skeletons = skeletonFinder.getSkeletons();
 	if (skeletons.size() > 0) {
 		// Only one skeleton is to be on the scene for the perspective to work
+		if (skeletons.size() > 1) {
+			sendMultipleSkeletonsAlert();
+		}
 		sendSkeletonData(skeletons[0]);
 	}
+}
+
+void TrackingNetworkManager::sendMultipleSkeletonsAlert() {
+	ofxOscMessage alertMsg;
+	alertMsg.setAddress("/ks/server/track/multiple-skeletons");
+	sendMessageToTrackingClients(alertMsg);
 }
 
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {

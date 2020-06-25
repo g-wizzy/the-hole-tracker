@@ -36,6 +36,7 @@ public:
 
     void sendTrackingData(const SkeletonFinder& skeletonFinder);
     void sendSkeletonData(const Skeleton& skeleton);
+    void sendMultipleSkeletonsAlert();
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);
     void checkTrackingClients(long _currentMillis);
