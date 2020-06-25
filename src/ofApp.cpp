@@ -5,6 +5,8 @@
 #define DEPTH_X_RES 640
 #define DEPTH_Y_RES 480
 
+#ifndef BLOB
+
 ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
 	// Thankfully this matrix is symmetric, so we need not worry about the row-major-ness
 	// of the matrix object
@@ -14,61 +16,61 @@ ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
 		0,     0,    1e-3, 0,
 		0,     0,    0,    1
 	};
-	// TODO: add scaling
 	return glm::make_mat4x4(mat);
 }
 
 const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
 
-//--------------------------------------------------------------
 void ofApp::initNuitrack() {
-	tracker = ofxnui::Tracker::create();
-	tracker->init("");
+	nuitracker = ofxnui::Tracker::create();
+	nuitracker->init("");
 
 	// depth feed settings
-	tracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
-	tracker->setConfigValue("Realsense2Module.Depth.RawWidth", "1280");
-	tracker->setConfigValue("Realsense2Module.Depth.RawHeight", "720");
-	tracker->setConfigValue("Realsense2Module.Depth.ProcessWidth", "1280");
-	tracker->setConfigValue("Realsense2Module.Depth.ProcessHeight", "720");
-	tracker->setConfigValue("Realsense2Module.Depth.ProcessMaxDepth", "7000");
+	nuitracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
+	nuitracker->setConfigValue("Realsense2Module.Depth.RawWidth", "1280");
+	nuitracker->setConfigValue("Realsense2Module.Depth.RawHeight", "720");
+	nuitracker->setConfigValue("Realsense2Module.Depth.ProcessWidth", "1280");
+	nuitracker->setConfigValue("Realsense2Module.Depth.ProcessHeight", "720");
+	nuitracker->setConfigValue("Realsense2Module.Depth.ProcessMaxDepth", "7000");
 
 	// rgb feed settings
-	tracker->setConfigValue("Realsense2Module.RGB.FPS", "30");
-	tracker->setConfigValue("Realsense2Module.RGB.RawWidth", "1280");
-	tracker->setConfigValue("Realsense2Module.RGB.RawHeight", "720");
-	tracker->setConfigValue("Realsense2Module.RGB.ProcessWidth", "1280");
-	tracker->setConfigValue("Realsense2Module.RGB.ProcessHeight", "720");
+	nuitracker->setConfigValue("Realsense2Module.RGB.FPS", "30");
+	nuitracker->setConfigValue("Realsense2Module.RGB.RawWidth", "1280");
+	nuitracker->setConfigValue("Realsense2Module.RGB.RawHeight", "720");
+	nuitracker->setConfigValue("Realsense2Module.RGB.ProcessWidth", "1280");
+	nuitracker->setConfigValue("Realsense2Module.RGB.ProcessHeight", "720");
 
 	// feeds alignement
-	tracker->setConfigValue("DepthProvider.Depth2ColorRegistration", "true");
+	nuitracker->setConfigValue("DepthProvider.Depth2ColorRegistration", "true");
 
 	// post processing settings
-	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_alpha", "0.1");
-	tracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
+	nuitracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_alpha", "0.1");
+	nuitracker->setConfigValue("Realsense2Module.Depth.PostProcessing.SpatialFilter.spatial_delta", "50");
 
 	// distance settings
-	tracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
-	tracker->setConfigValue("Skeletonization.MaxDistance", "7000");
+	nuitracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
+	nuitracker->setConfigValue("Skeletonization.MaxDistance", "7000");
 
-	tracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
+	nuitracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
 		auto issue = data->getIssue<nuitrack::Issue>();
 		if (issue) {
 			ofLogNotice() << "Issue detected! " << issue->getName() << " [" << issue->getId() << "]";
 		}
 		});
-	tracker->setRGBCallback([this](nuitrack::RGBFrame::Ptr data) {
+	nuitracker->setRGBCallback([this](nuitrack::RGBFrame::Ptr data) {
 		pointCloudManager.updateRGB(data);
 		});
-	tracker->setDepthCallback([this](nuitrack::DepthFrame::Ptr data) {
+	nuitracker->setDepthCallback([this](nuitrack::DepthFrame::Ptr data) {
 		pointCloudManager.updateDepth(data);
 		});
-	tracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
-		skeletonFinder.update(data);
+	nuitracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
+		tracker.update(data);
 		});
 
-	pointCloudManager.setDepthSensor(tracker->depthTracker);
+	pointCloudManager.setDepthSensor(nuitracker->depthTracker);
 }
+
+#endif
 
 void ofApp::initViewports() {
 	float xOffset = VIEWGRID_WIDTH; //ofGetWidth() / 3;
@@ -104,11 +106,13 @@ void ofApp::setupTransformGui() {
 	guitransform->addGroup(transformationGuiGroup);
 
 	// The GUI apparently cannot display matrices
-	// Also the method apparently requires a reference for some reason
+	// Also this method apparently requires a reference for some reason
 	bool visible = false;
 	guitransform->setVisible(visible);
 
+	#ifndef BLOB
 	reloadTransformMatrix();
+	#endif
 }
 
 void ofApp::reloadTransformMatrix() {
@@ -120,29 +124,35 @@ void ofApp::reloadTransformMatrix() {
 }
 
 void ofApp::setup(){
+#ifdef BLOB
+
+#else
 	ofLog(OF_LOG_NOTICE) << "Nuitrack setup started";
 	initNuitrack();
-	skeletonFinder.setTransformMatrix(&deviceToWorldTransform);
+	tracker.setTransformMatrix(&deviceToWorldTransform);
+#endif
 
 	ofLog(OF_LOG_NOTICE) << "Viewport setup started";
 	initViewports();
 
 	ofLog(OF_LOG_NOTICE) << "Loading GUI";
 	setupTransformGui();
-	skeletonFinder.initGUI(gui);
+	tracker.initGUI(gui);
 
 	ofLog(OF_LOG_NOTICE) << "MainAPP: starting attached Device...";
-	tracker->run();
+#ifdef BLOB
+	// TODO: init realsense
+#else
+	nuitracker->run();
+#endif
 
 	bPreviewPointCloud = false;
     
 	ofLog(OF_LOG_NOTICE) << "MainAPP: setting up networking...";
-	networkMng.setup(gui, "TODO: remove useless arg");
+	networkMng.setup(gui);
 
     setupViewports();
     createHelp();
-
-	tracker->run();
     
     capMesh.reSize(4);
     
@@ -152,20 +162,25 @@ void ofApp::setup(){
 //--------------------------------------------------------------
 void ofApp::setupViewports(){
 	//call here whenever we resize the window
-	// TODO: update UI
-	skeletonFinder.panel->setWidth(MENU_WIDTH / 2);
-	networkMng.panel->setWidth(MENU_WIDTH / 2);
+	tracker.panel->setWidth(MENU_WIDTH / 2);
+	tracker.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
 
-	skeletonFinder.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
+	networkMng.panel->setWidth(MENU_WIDTH / 2);
 	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	tracker->poll();
+
 	ofBackground(100, 100, 100);
 
-	networkMng.update(skeletonFinder);
+#ifdef BLOB
+	// TODO
+#else
+	nuitracker->poll();
+#endif
+
+	networkMng.update(tracker);
 }
 
 //--------------------------------------------------------------
@@ -174,8 +189,12 @@ void ofApp::draw() {
 
     if(bShowVisuals){
         // Draw viewport previews
+#ifdef BLOB
+	// TODO: draw point cloud
+#else
 		pointCloudManager.drawRGB(viewGrid[0]);
 		pointCloudManager.drawDepth(viewGrid[1]);
+#endif
 		if (iMainCamera != 2) { // make sure the camera is drawn only once (so the interaction with the mouse works)
 			previewCam.begin(viewGrid[2]);
 			mainGrid.drawPlane(5., 5, false);
@@ -185,10 +204,16 @@ void ofApp::draw() {
         
         switch (iMainCamera) {
             case 0:
+#ifdef BLOB
+#else
 				pointCloudManager.drawRGB(viewMain);
+#endif
                 break;
             case 1:
+#ifdef BLOB
+#else
 				pointCloudManager.drawDepth(viewMain);
+#endif
                 break;
             case 2:
                 previewCam.begin(viewMain);
@@ -217,12 +242,6 @@ void ofApp::draw() {
         ofDrawBitmapString(help, 20 ,VIEWPORT_HEIGHT + 50);
     }
 
-	if (bShowSkeletonData) {
-		ofDrawBitmapString(skeletonFinder.getShortDesc(),
-			20,
-			VIEWPORT_HEIGHT + 20);
-	}
-
     ofDrawBitmapString("fps: " + ofToString(ofGetFrameRate()), ofGetWidth() - 200, 10);
 
     ofPopStyle();
@@ -235,26 +254,26 @@ void ofApp::drawPreview() {
     //This moves the crossingpoint of the kinect center line and the plane to the center of the stage
     //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
 	if (bPreviewPointCloud) {
+#ifdef BLOB
+#else
 		ofPushMatrix();
 		ofMultMatrix(worldToDeviceTransform);
 		pointCloudManager.drawPointCloud();
 		ofPopMatrix();
+#endif
 	}
-
-	// TODO: draw base
-	//ofFill();
-	//ofSetColor(255, 0, 0);
-	//sphere_X.draw();
-	//sphere_Y.draw();
-	//sphere_Z.draw();
 	
 	ofPushStyle();
     ofSetColor(255, 255, 0);
-    skeletonFinder.drawSensorBox();
+    tracker.drawSensorBox();
 	
 	glLineWidth(5);
     ofSetColor(255, 100, 255);
-	skeletonFinder.drawSkeletons();
+#ifdef BLOB
+	tracker.drawBlobs();
+#else
+	tracker.drawSkeletons();
+#endif
 	ofPopStyle();
 
 	glDisable(GL_DEPTH_TEST);  
@@ -264,7 +283,10 @@ void ofApp::drawPreview() {
 void ofApp::exit() {
     ofLog(OF_LOG_NOTICE) << "exiting application...";
 	
+#ifdef BLOB
+#else
 	// Nuitrack auto-releases on destroy ...
+#endif
 }
 
 void ofApp::createHelp(){
@@ -290,19 +312,15 @@ void ofApp::keyPressed(int key){
 		case'v':
 			bShowVisuals = !bShowVisuals;
             break;
-            
-        case 'r':
-            bShowSkeletonData = !bShowSkeletonData;
-            break;
  
         case 's':
-            skeletonFinder.panel->saveToFile("trackings.xml");
+            tracker.panel->saveToFile("trackings.xml");
 			networkMng.panel->saveToFile("broadcast.xml");
 			guitransform->saveToFile("transformation.xml");
 			break;
 
         case 'l':
-            skeletonFinder.panel->loadFromFile("trackings.xml");
+            tracker.panel->loadFromFile("trackings.xml");
             networkMng.panel->loadFromFile("broadcast.xml");
 			guitransform->loadFromFile("transformation.xml");
 			break;

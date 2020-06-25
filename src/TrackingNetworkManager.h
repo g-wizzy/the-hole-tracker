@@ -12,7 +12,13 @@
 #include "ofConstants.h"
 #include "ofxOsc.h"
 #include "TrackingClient.h"
-#include "SkeletonFinder.h"
+
+#ifdef BLOB
+    #include "BlobFinder.h"
+    #include "BlobTracker.h"
+#else
+    #include "SkeletonFinder.h"
+#endif
 
 #include <cmath>
 #include <regex>
@@ -28,15 +34,26 @@
 #define NETWORK_BROADCAST_PORT 47500
 #define NETWORK_LISTENING_PORT 47600
 
+#ifdef BLOB
+    typedef BlobFinder BodyFinder;
+#else
+    typedef SkeletonFinder BodyFinder;
+#endif
+
 class TrackingNetworkManager {
     
 public:    
-    void setup(ofxGui &gui, string _realsenseSerial);
-    void update(const SkeletonFinder& skeletonFinder);
+    void setup(ofxGui &gui);
 
-    void sendTrackingData(const SkeletonFinder& skeletonFinder);
+    void update(const BodyFinder& bodyFinder);
+    void sendTrackingData(const BodyFinder& bodyFinder);
+    void sendMultipleBodiesAlert();
+
+#ifdef BLOB
+    void sendBlobData(const BlobTracker& blob);
+#else
     void sendSkeletonData(const Skeleton& skeleton);
-    void sendMultipleSkeletonsAlert();
+#endif
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);
     void checkTrackingClients(long _currentMillis);
@@ -47,8 +64,6 @@ public:
 	vector<string> matchesInRegex(string _str, string _reg);
 
     vector<string>  localIpAddresses;
-    
-    string          mDeviceSerial;
     
     //----------------------------------------
     // Server side:

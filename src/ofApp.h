@@ -3,7 +3,6 @@
 #include "ofMain.h"
 #include "ofxNetwork.h"
 #include "ofxGuiExtended.h"
-#include "SkeletonFinder.h"
 #include "Planef.h"
 #include "Linef.h"
 #include "Grid.h"
@@ -12,8 +11,15 @@
 #include "CaptureMeshArray.h"
 #include "PointCloudManager.h"
 
-#include "ofxNuitrack.h"
-#include <nuitrack/Nuitrack.h>
+#ifdef BLOB
+    #include "ofxRealSenseTwo.h"
+    #include <librealsense2/rs.h>
+    #include "BlobFinder.h"
+#else
+    #include "ofxNuitrack.h"
+    #include <nuitrack/Nuitrack.h>
+    #include "SkeletonFinder.h"
+#endif
 
 #include <ofMatrix4x4.h>
 
@@ -32,7 +38,11 @@
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
-using namespace ofxnui;
+#ifdef BLOB
+    using namespace ofxRealSenseTwo;
+#else
+    using namespace ofxnui;
+#endif
 
 //helpfull links during development:
 // https://github.com/openframeworks/openFrameworks/issues/3817
@@ -96,15 +106,27 @@ public:
     ofTexture render;
     
     /////////////
-    //Nuitrack //
+    //Sensor   //
     /////////////
 
+#ifdef BLOB
+
+    RSDevicePtr realSense;
+    ofShader shader;
+
+    BlobFinder tracker;
+
+#else
+
     void initNuitrack();
+    TrackerRef nuitracker;
+    PointCloudManager pointCloudManager;
+    
+    SkeletonFinder tracker;
+
+#endif
 
     void reloadTransformMatrix();
-        
-    TrackerRef tracker;
-    PointCloudManager pointCloudManager;    
 
     bool dispRaw;
 
@@ -116,20 +138,15 @@ public:
 	
     void drawPreview();
 
-
     /////////////////
     //COLOR CONTOUR//
     /////////////////
-    
-    SkeletonFinder skeletonFinder;
-            
+       
     // used for viewing the point cloud
     ofEasyCam previewCam;
             
     ofMatrix4x4 deviceToWorldTransform;
     ofMatrix4x4 worldToDeviceTransform;
-    
-    bool bShowSkeletonData = true;
 
     //////////////
     //PROPERTIES//

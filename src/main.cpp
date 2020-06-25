@@ -1,3 +1,5 @@
+// #define BLOB
+
 #include "ofMain.h"
 #include "ofApp.h"
 

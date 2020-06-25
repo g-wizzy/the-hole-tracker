@@ -9,9 +9,7 @@
 #include "TrackingNetworkManager.h"
 
 
-void TrackingNetworkManager::setup(ofxGui &gui, string _realsenseSerial){
-    mDeviceSerial = _realsenseSerial;
-    
+void TrackingNetworkManager::setup(ofxGui &gui){    
     string localAddress = "127.0.0.1";
     
     for(int i = 0; i < localIpAddresses.size(); i++){
@@ -41,11 +39,11 @@ void TrackingNetworkManager::setup(ofxGui &gui, string _realsenseSerial){
 
 
 //--------------------------------------------------------------
-void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
+void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
     long currentMillis = ofGetElapsedTimeMillis();
 
     //send trackingdata to all connected clients
-    sendTrackingData(skeletonFinder);
+    sendTrackingData(bodyFinder);
     
     // OSC receiver queues up new messages, so you need to iterate
 	// through waiting messages to get each incoming message
@@ -103,23 +101,33 @@ void TrackingNetworkManager::update(const SkeletonFinder& skeletonFinder){
 	}
 }
 
-void TrackingNetworkManager::sendTrackingData(const SkeletonFinder& skeletonFinder) {
-	vector<Skeleton> skeletons = skeletonFinder.getSkeletons();
+void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
+
+#ifdef BLOB
+    // TODO
+#else
+	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
 	if (skeletons.size() > 0) {
 		// Only one skeleton is to be on the scene for the perspective to work
 		if (skeletons.size() > 1) {
-			sendMultipleSkeletonsAlert();
+			sendMultipleBodiesAlert();
 		}
 		sendSkeletonData(skeletons[0]);
 	}
+#endif
 }
 
-void TrackingNetworkManager::sendMultipleSkeletonsAlert() {
+void TrackingNetworkManager::sendMultipleBodiesAlert() {
 	ofxOscMessage alertMsg;
-	alertMsg.setAddress("/ks/server/track/multiple-skeletons");
+	alertMsg.setAddress("/ks/server/track/multiple-bodies");
 	sendMessageToTrackingClients(alertMsg);
 }
 
+#ifdef BLOB
+void TrackingNetworkManager::sendBlobData(const BlobTrackeb& blob) {
+	// TODO
+}
+#else
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 	ofxOscMessage skeletonMsg;
 	skeletonMsg.setAddress("/ks/server/track/skeleton");
@@ -134,6 +142,7 @@ void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
 
 	sendMessageToTrackingClients(skeletonMsg);
 }
+#endif
 
 void TrackingNetworkManager::sendMessageToTrackingClients(ofxOscMessage _msg){
     for(int j = 0; j < knownClients.size(); j++){
