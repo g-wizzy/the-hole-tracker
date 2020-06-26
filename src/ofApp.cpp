@@ -117,11 +117,9 @@ void ofApp::reloadTransformMatrix() {
 	guitransform->loadFromFile("transformation.xml");
 
 #ifdef BLOB
-	worldToDeviceTransform = transformation.get();
 	deviceToWorldTransform = transformation.get();
 #else
 	// ofMatrices multiplication works in reverse
-	worldToDeviceTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 #endif
 }

@@ -150,7 +150,6 @@ public:
     ofEasyCam previewCam;
             
     ofMatrix4x4 deviceToWorldTransform;
-    ofMatrix4x4 worldToDeviceTransform;
 
     //////////////
     //PROPERTIES//
