@@ -32,7 +32,7 @@ struct BodyBlob {
 class BlobFinder {
     
 public:
-    void setup(ofxGui &gui);
+    void initGUI(ofxGui &gui);
     void allocate(int &value);
     
 	void captureBegin();

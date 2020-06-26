@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "ofMain.h"
 #include "ofxNetwork.h"
 #include "ofxGuiExtended.h"
@@ -11,6 +12,7 @@
 #include "CaptureMeshArray.h"
 #include "PointCloudManager.h"
 
+#include "DetectionMethod.h"
 #ifdef BLOB
     #include "ofxRealSenseTwo.h"
     #include <librealsense2/rs.h>
@@ -74,7 +76,7 @@ public:
 	ofTrueTypeFont  monosm;
 	vector<ofPoint> stroke;
 
-    bool bShowVisuals = false;
+    bool bShowVisuals = true;
 
     //////////////////
     //    NETWORK   //
@@ -112,9 +114,11 @@ public:
 #ifdef BLOB
 
     RSDevicePtr realSense;
-    ofShader shader;
+    void createGUIDeviceParams();
 
+    ofShader shader;
     BlobFinder tracker;
+    bool bUpdateImageMask = false;
 
 #else
 
@@ -138,9 +142,9 @@ public:
 	
     void drawPreview();
 
-    /////////////////
-    //COLOR CONTOUR//
-    /////////////////
+#ifdef BLOB
+    void drawCapturePointCloud(bool mask);
+#endif
        
     // used for viewing the point cloud
     ofEasyCam previewCam;
@@ -155,9 +159,21 @@ public:
 
     ofxGui gui;
     
+    ofxGuiPanel *setupCalib;
+	ofxGuiPanel *device;
+	ofxGuiPanel *post;
 	ofxGuiPanel *guitransform;
+
 	ofParameterGroup transformationGuiGroup;
     ofParameter<ofMatrix4x4> transformation;
+
+    ofParameterGroup intrinsicGuiGroup;
+
+    ofParameter<float> depthCorrectionBase;
+    ofParameter<float> depthCorrectionDivisor;
+    ofParameter<float> pixelSizeCorrector;
+    ofParameter<int> blobGrain;
+    ofParameter<bool> captureVideo;
     
     //////////
     // HELP //
@@ -167,8 +183,10 @@ public:
     bool bShowHelp = true;
 
     void createHelp();
-
+    
+#ifndef BLOB
 private:
     const static ofMatrix4x4 nuitrackViewportToRealSenseViewportTransform;
     static ofMatrix4x4 makeNuitrackToRealSenseTransform();
+#endif
 };

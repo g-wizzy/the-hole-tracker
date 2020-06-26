@@ -8,7 +8,7 @@
 
 #include "BlobFinder.h"
 
-void BlobFinder::setup(ofxGui &gui){
+void BlobFinder::initGUI(ofxGui &gui){
 
     //////////
     //GUI   //

@@ -13,6 +13,7 @@
 #include "ofxOsc.h"
 #include "TrackingClient.h"
 
+#include "DetectionMethod.h"
 #ifdef BLOB
     #include "BlobFinder.h"
     #include "BlobTracker.h"

@@ -118,14 +118,34 @@ void ofApp::setupTransformGui() {
 void ofApp::reloadTransformMatrix() {
 	guitransform->loadFromFile("transformation.xml");
 
+#ifndef BLOB
 	// ofMatrices multiplication works in reverse
 	worldToDeviceTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
+#endif
 }
 
 void ofApp::setup(){
-#ifdef BLOB
 
+#ifdef BLOB
+	if (ofIsGLProgrammableRenderer()) {
+		shader.load("shadersGL3/shader");
+	}
+	else {
+		shader.load("shadersGL2/shader");
+	}
+
+	ofLog(OF_LOG_NOTICE) << "MainAPP: looking for RealSense Device...";
+
+	// ofSetLogLevel(OF_LOG_VERBOSE);
+
+	realSense = RSDevice::createUniquePtr();
+
+	realSense->checkConnectedDialog();
+
+	realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
+
+	ofLog(OF_LOG_NOTICE) << "... RealSense Device found.";
 #else
 	ofLog(OF_LOG_NOTICE) << "Nuitrack setup started";
 	initNuitrack();
@@ -140,8 +160,11 @@ void ofApp::setup(){
 	tracker.initGUI(gui);
 
 	ofLog(OF_LOG_NOTICE) << "MainAPP: starting attached Device...";
+
 #ifdef BLOB
-	// TODO: init realsense
+	if (realSense->capture()) {
+		createGUIDeviceParams();
+	}
 #else
 	nuitracker->run();
 #endif
@@ -161,13 +184,42 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::setupViewports(){
-	//call here whenever we resize the window
 	tracker.panel->setWidth(MENU_WIDTH / 2);
 	tracker.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
+
+#ifdef BLOB
+	// TODO
+#else
+	// TODO
+#endif
 
 	networkMng.panel->setWidth(MENU_WIDTH / 2);
 	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 }
+
+#ifdef BLOB
+void ofApp::createGUIDeviceParams() {
+	device->clear();
+	device->loadTheme("theme/theme_light.json");
+	device->setName("RealSense Device");
+	device->add<ofxGuiLabel>(realSense->getSerialNumber(-1));
+
+	intrinsicGuiGroup.clear();
+	intrinsicGuiGroup.setName("Settings");
+	intrinsicGuiGroup.add(realSense->param_deviceLaser);
+	intrinsicGuiGroup.add(realSense->param_deviceLaser_mag);
+	intrinsicGuiGroup.add(realSense->param_deviceAutoExposure);
+	intrinsicGuiGroup.add(realSense->param_deviceExposure_mag);
+	intrinsicGuiGroup.add(realSense->param_deviceGain_mag);
+	intrinsicGuiGroup.add(realSense->param_deviceFrameQueSize_mag);
+	intrinsicGuiGroup.add(realSense->param_deviceAsicTemparature);
+	intrinsicGuiGroup.add(realSense->param_deviceProjectorTemparature);
+
+	device->addGroup(intrinsicGuiGroup);
+
+	device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+}
+#endif
 
 //--------------------------------------------------------------
 void ofApp::update(){
@@ -175,7 +227,22 @@ void ofApp::update(){
 	ofBackground(100, 100, 100);
 
 #ifdef BLOB
-	// TODO
+	if(realSense->update(ofxRealSenseTwo::PointCloud::INFRALEFT)) {
+
+		if (bUpdateImageMask) {
+			tracker.captureMaskBegin();
+			drawCapturePointCloud(true);
+			tracker.captureMaskEnd();
+		} else {
+			// Cature captureCloud to FBO
+			tracker.captureBegin();
+			drawCapturePointCloud(false);
+			tracker.captureEnd();
+
+			// BlobFinding on the captured FBO
+			tracker.update();
+		}
+	}
 #else
 	nuitracker->poll();
 #endif
@@ -183,21 +250,22 @@ void ofApp::update(){
 	networkMng.update(tracker);
 }
 
-//--------------------------------------------------------------
 void ofApp::draw() {
 	ofSetColor(255, 255, 255);
 
     if(bShowVisuals){
         // Draw viewport previews
 #ifdef BLOB
-	// TODO: draw point cloud
+		realSense->drawVideoStream(viewGrid[0]);
+		//realSense->drawDepthStream(viewGrid[0]);
+		realSense->drawInfraLeftStream(viewGrid[1]);
 #else
 		pointCloudManager.drawRGB(viewGrid[0]);
 		pointCloudManager.drawDepth(viewGrid[1]);
 #endif
 		if (iMainCamera != 2) { // make sure the camera is drawn only once (so the interaction with the mouse works)
 			previewCam.begin(viewGrid[2]);
-			mainGrid.drawPlane(5., 5, false);
+			mainGrid.drawPlane(5, 5, false);
 			drawPreview();
 			previewCam.end();
 		}
@@ -205,12 +273,14 @@ void ofApp::draw() {
         switch (iMainCamera) {
             case 0:
 #ifdef BLOB
+				realSense->drawVideoStream(viewMain);
 #else
 				pointCloudManager.drawRGB(viewMain);
 #endif
                 break;
             case 1:
 #ifdef BLOB
+				realSense->drawInfraLeftStream(viewMain);
 #else
 				pointCloudManager.drawDepth(viewMain);
 #endif
@@ -251,16 +321,18 @@ void ofApp::drawPreview() {
 	glPointSize(4);
 	glEnable(GL_DEPTH_TEST);
 
+	ofPushMatrix();
+
     //This moves the crossingpoint of the kinect center line and the plane to the center of the stage
     //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
 	if (bPreviewPointCloud) {
-#ifdef BLOB
-#else
-		ofPushMatrix();
 		ofMultMatrix(worldToDeviceTransform);
+#ifdef BLOB
+		realSense->draw();
+#else
 		pointCloudManager.drawPointCloud();
-		ofPopMatrix();
 #endif
+		ofPopMatrix();
 	}
 	
 	ofPushStyle();
@@ -270,7 +342,8 @@ void ofApp::drawPreview() {
 	glLineWidth(5);
     ofSetColor(255, 100, 255);
 #ifdef BLOB
-	tracker.drawBlobs();
+	tracker.drawBodyBlobsBox();
+    tracker.drawBodyBlobsHeadTop();
 #else
 	tracker.drawSkeletons();
 #endif
@@ -279,7 +352,36 @@ void ofApp::drawPreview() {
 	glDisable(GL_DEPTH_TEST);  
 }
 
-//--------------------------------------------------------------
+void ofApp::drawCapturePointCloud(bool _mask) {
+    glEnable(GL_DEPTH_TEST);
+
+	shader.begin();
+
+	float lowerLimit = tracker.sensorBoxBottom.get() / 1000.f;
+	float upperLimit = tracker.sensorBoxTop.get() / 1000.f;
+
+	if (_mask) {
+		shader.setUniform1i("mask", 1);
+		glPointSize(blobGrain.get() * 4);
+	}
+	else {
+		shader.setUniform1i("mask", 0);
+		glPointSize(blobGrain.get() * 2);
+	}
+	shader.setUniform1f("lowerLimit", lowerLimit);
+	shader.setUniform1f("upperLimit", upperLimit);
+	shader.setUniformMatrix4f("viewMatrixInverse", glm::inverse(ofGetCurrentViewMatrix()));
+
+	ofPushMatrix();
+	ofMultMatrix(worldToDeviceTransform);
+	realSense->draw();
+	ofPopMatrix();
+	
+	shader.end();
+	
+	glDisable(GL_DEPTH_TEST);
+}
+
 void ofApp::exit() {
     ofLog(OF_LOG_NOTICE) << "exiting application...";
 	
