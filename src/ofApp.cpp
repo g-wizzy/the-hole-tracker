@@ -277,7 +277,7 @@ void ofApp::draw() {
                 break;
             case 1:
 #ifdef BLOB
-				realSense->drawInfraLeftStream(viewMain);
+				realSense->drawVideoStream(viewMain);
 #else
 				pointCloudManager.drawDepth(viewMain);
 #endif
@@ -306,6 +306,7 @@ void ofApp::draw() {
 	ofSetColor(255, 255, 255);
     
     if(bShowHelp) {
+		createHelp();
         ofDrawBitmapString(help, 20 ,VIEWPORT_HEIGHT + 50);
     }
 
@@ -320,8 +321,6 @@ void ofApp::drawPreview() {
 
 	ofPushMatrix();
 
-    //This moves the crossingpoint of the kinect center line and the plane to the center of the stage
-    //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
 	if (bPreviewPointCloud) {
 		ofMultMatrix(deviceToWorldTransform);
 #ifdef BLOB
@@ -388,6 +387,7 @@ void ofApp::exit() {
     ofLog(OF_LOG_NOTICE) << "exiting application...";
 	
 #ifdef BLOB
+	realSense->stop();
 #else
 	// Nuitrack auto-releases on destroy ...
 #endif
@@ -401,7 +401,8 @@ void ofApp::createHelp(){
     helpStream << "press h -> to show help \n";
     helpStream << "press s -> to save current settings.\n";
 	helpStream << "press l -> to load last saved settings\n";
-	helpStream << "press m -> to update mask image CAREFULL: press m again to stop updating (" + ofToString(bUpdateImageMask) + ")\n";
+	helpStream << "press m -> to update mask image (currently" <<
+		(bUpdateImageMask ? " " : " not ") << "updating)\n";
 	helpStream << "press r -> to show calculation results \n";
 
 	help = helpStream.str();
@@ -427,7 +428,7 @@ void ofApp::keyPressed(int key){
 			guitransform->saveToFile("transformation.xml");
 #ifdef BLOB
 			tracker.saveMask();
-			post->saveToFile("postprocessing.xml");
+			//post->saveToFile("postprocessing.xml");
 #endif
 			break;
 
@@ -435,9 +436,10 @@ void ofApp::keyPressed(int key){
             tracker.panel->loadFromFile("trackings.xml");
             networkMng.panel->loadFromFile("broadcast.xml");
 			guitransform->loadFromFile("transformation.xml");
+			reloadTransformMatrix();
 #ifdef BLOB
 			tracker.loadMask();
-			post->loadFromFile("postprocessing.xml");
+			//post->loadFromFile("postprocessing.xml");
 #endif
 			break;
            
