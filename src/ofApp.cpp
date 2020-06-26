@@ -277,7 +277,7 @@ void ofApp::draw() {
                 break;
             case 1:
 #ifdef BLOB
-				realSense->drawVideoStream(viewMain);
+				realSense->drawDepthStream(viewMain);
 #else
 				pointCloudManager.drawDepth(viewMain);
 #endif
