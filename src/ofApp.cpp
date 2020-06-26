@@ -110,15 +110,16 @@ void ofApp::setupTransformGui() {
 	bool visible = false;
 	guitransform->setVisible(visible);
 
-	#ifndef BLOB
 	reloadTransformMatrix();
-	#endif
 }
 
 void ofApp::reloadTransformMatrix() {
 	guitransform->loadFromFile("transformation.xml");
 
-#ifndef BLOB
+#ifdef BLOB
+	worldToDeviceTransform = transformation.get();
+	deviceToWorldTransform = transformation.get();
+#else
 	// ofMatrices multiplication works in reverse
 	worldToDeviceTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
@@ -188,9 +189,8 @@ void ofApp::setupViewports(){
 	tracker.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
 
 #ifdef BLOB
-	// TODO
-#else
-	// TODO
+	device->setWidth(MENU_WIDTH / 2);
+	device->setPosition(ofGetWidth() - MENU_WIDTH / 2, ofGetHeight() / 2);
 #endif
 
 	networkMng.panel->setWidth(MENU_WIDTH / 2);
@@ -200,7 +200,7 @@ void ofApp::setupViewports(){
 #ifdef BLOB
 void ofApp::createGUIDeviceParams() {
 	device = gui.addPanel();
-	
+
 	device->clear();
 	device->loadTheme("theme/theme_light.json");
 	device->setName("RealSense Device");
@@ -227,7 +227,7 @@ void ofApp::update(){
 	ofBackground(100, 100, 100);
 
 #ifdef BLOB
-	if(realSense->update(ofxRealSenseTwo::PointCloud::INFRALEFT)) {
+	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
 		if (bUpdateImageMask) {
 			tracker.captureMaskBegin();
@@ -257,8 +257,7 @@ void ofApp::draw() {
         // Draw viewport previews
 #ifdef BLOB
 		realSense->drawVideoStream(viewGrid[0]);
-		//realSense->drawDepthStream(viewGrid[0]);
-		realSense->drawInfraLeftStream(viewGrid[1]);
+		realSense->drawDepthStream(viewGrid[1]);
 #else
 		pointCloudManager.drawRGB(viewGrid[0]);
 		pointCloudManager.drawDepth(viewGrid[1]);
@@ -326,32 +325,36 @@ void ofApp::drawPreview() {
     //This moves the crossingpoint of the kinect center line and the plane to the center of the stage
     //ofTranslate(-planeCenterPoint.x, -planeCenterPoint.y, 0);
 	if (bPreviewPointCloud) {
-		ofMultMatrix(worldToDeviceTransform);
+		ofMultMatrix(deviceToWorldTransform);
 #ifdef BLOB
 		realSense->draw();
 #else
 		pointCloudManager.drawPointCloud();
 #endif
-		ofPopMatrix();
 	}
+	ofPopMatrix();
 	
 	ofPushStyle();
+
     ofSetColor(255, 255, 0);
     tracker.drawSensorBox();
-	
-	glLineWidth(5);
+
     ofSetColor(255, 100, 255);
 #ifdef BLOB
+	glLineWidth(5);
 	tracker.drawBodyBlobsBox();
     tracker.drawBodyBlobsHeadTop();
 #else
+	ofPopMatrix();
 	tracker.drawSkeletons();
 #endif
+
 	ofPopStyle();
 
 	glDisable(GL_DEPTH_TEST);  
 }
 
+#ifdef BLOB
 void ofApp::drawCapturePointCloud(bool _mask) {
     glEnable(GL_DEPTH_TEST);
 
@@ -373,7 +376,7 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 	shader.setUniformMatrix4f("viewMatrixInverse", glm::inverse(ofGetCurrentViewMatrix()));
 
 	ofPushMatrix();
-	ofMultMatrix(worldToDeviceTransform);
+	ofMultMatrix(deviceToWorldTransform);
 	realSense->draw();
 	ofPopMatrix();
 	
@@ -381,6 +384,7 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 	
 	glDisable(GL_DEPTH_TEST);
 }
+#endif
 
 void ofApp::exit() {
     ofLog(OF_LOG_NOTICE) << "exiting application...";
@@ -392,13 +396,17 @@ void ofApp::exit() {
 }
 
 void ofApp::createHelp(){
-    help = string("press v -> to show visualizations\n");
-	help += "press 1 - 3 -> to change the viewport\n";
-	help += "press p -> to show pointcloud\n";
-    help += "press h -> to show help \n";
-    help += "press s -> to save current settings.\n";
-	help += "press l -> to load last saved settings\n";
-	help += "press r -> to show calculation results \n";
+	stringstream helpStream;
+    helpStream << "press v -> to show visualizations\n";
+	helpStream << "press 1 - 3 -> to change the viewport\n";
+	helpStream << "press p -> to show pointcloud\n";
+    helpStream << "press h -> to show help \n";
+    helpStream << "press s -> to save current settings.\n";
+	helpStream << "press l -> to load last saved settings\n";
+	helpStream << "press m -> to update mask image CAREFULL: press m again to stop updating (" + ofToString(bUpdateImageMask) + ")\n";
+	helpStream << "press r -> to show calculation results \n";
+
+	help = helpStream.str();
 }
 
 //--------------------------------------------------------------
@@ -407,11 +415,11 @@ void ofApp::keyPressed(int key){
 		case ' ':
 			break;
 			
-		case'p':
+		case 'p':
 			bPreviewPointCloud = !bPreviewPointCloud;
             break;
             
-		case'v':
+		case 'v':
 			bShowVisuals = !bShowVisuals;
             break;
  
@@ -419,12 +427,20 @@ void ofApp::keyPressed(int key){
             tracker.panel->saveToFile("trackings.xml");
 			networkMng.panel->saveToFile("broadcast.xml");
 			guitransform->saveToFile("transformation.xml");
+#ifdef BLOB
+			tracker.saveMask();
+			post->saveToFile("postprocessing.xml");
+#endif
 			break;
 
         case 'l':
             tracker.panel->loadFromFile("trackings.xml");
             networkMng.panel->loadFromFile("broadcast.xml");
 			guitransform->loadFromFile("transformation.xml");
+#ifdef BLOB
+			tracker.loadMask();
+			post->loadFromFile("postprocessing.xml");
+#endif
 			break;
            
 		case 'h':
@@ -433,6 +449,13 @@ void ofApp::keyPressed(int key){
                 createHelp();
             }
 			break;
+
+		case 'm':
+			bUpdateImageMask = !bUpdateImageMask;
+			if (bUpdateImageMask) {
+				tracker.clearMask();
+			}
+			break;	
             
 		case '1':
             iMainCamera = 0;
