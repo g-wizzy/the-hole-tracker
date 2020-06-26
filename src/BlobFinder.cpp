@@ -17,7 +17,7 @@ void BlobFinder::initGUI(ofxGui &gui){
     panel = gui.addPanel();
     
     panel->loadTheme("theme/theme_light.json");
-    panel->setName("Tracking...");
+    panel->setName("Tracking");
 
 	sensorFboSize.addListener(this, &BlobFinder::allocate);
 
@@ -48,15 +48,12 @@ void BlobFinder::initGUI(ofxGui &gui){
 	blobGuiGroup->add(blobAreaMinStp1.set("AreaMinStp1", 10, 0, 255));
 	blobGuiGroup->add(blobAreaMinStp2.set("AreaMinStp2", 10, 0, 255));
 	blobGuiGroup->add(countBlob.set("MaxBlobs", 5, 1, N_MAX_BLOBS));
- 
-	blobEyeGroup = panel->addGroup("Gazing");
-	blobEyeGroup->add(useGazePoint.set("Use gaze point", true));
-    blobEyeGroup->add(gazePoint.set("Gaze point", ofVec3f(0, 0, 1500), ofVec3f(-2000, 0, 0), ofVec3f(2000, 5000, 3000)));
-    blobEyeGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
-    blobEyeGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
+	blobGuiGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
+    blobGuiGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
     
     panel->loadFromFile("trackings.xml");
 
+	loadMask();
 }
 
 void BlobFinder::allocate(int &value){
@@ -262,19 +259,19 @@ void BlobFinder::update(){
 	
 	eyeRef.setColor(black);
 
-    float sensorFieldFront = sensorBoxFront.get() * SCALE;
-    float sensorFieldBack = sensorBoxBack.get() * SCALE;
-    float sensorFieldLeft = sensorBoxLeft.get() * SCALE;
-    float sensorFieldRight = sensorBoxRight.get() * SCALE;
-    float sensorFieldTop = sensorBoxTop .get() * SCALE;
-    float sensorFieldBottom = sensorBoxBottom.get() * SCALE;
-    float sensorFieldWidth = sensorFieldRight - sensorFieldLeft;
-    float sensorFieldHeigth = sensorFieldTop - sensorFieldBottom;
-    float sensorFieldDepth = sensorFieldBack - sensorFieldFront;
+    const float sensorFieldFront = sensorBoxFront.get() * SCALE;
+    const float sensorFieldBack = sensorBoxBack.get() * SCALE;
+    const float sensorFieldLeft = sensorBoxLeft.get() * SCALE;
+    const float sensorFieldRight = sensorBoxRight.get() * SCALE;
+    const float sensorFieldTop = sensorBoxTop .get() * SCALE;
+    const float sensorFieldBottom = sensorBoxBottom.get() * SCALE;
+    const float sensorFieldWidth = sensorFieldRight - sensorFieldLeft;
+    const float sensorFieldHeigth = sensorFieldTop - sensorFieldBottom;
+    const float sensorFieldDepth = sensorFieldBack - sensorFieldFront;
     
-    int eyeLevelColor = eyeLevel.get() / sensorFieldHeigth * 255;
+    const int eyeLevelColor = eyeLevel.get() / sensorFieldHeigth * 255;
     
-    int headTopThreshold = eyeLevelColor / 4;
+    const int headTopThreshold = eyeLevelColor / 4;
     
     //ofLog(OF_LOG_NOTICE, "eyeLevelColor = " + ofToString(eyeLevelColor));
     
@@ -286,7 +283,6 @@ void BlobFinder::update(){
 
 	int minBlobSize = pow(blobAreaMinStp1.get() * sensorFboSize.get(), 2);
 	int maxBlobSize = pow(blobAreaMax.get() * sensorFboSize.get(), 2);
-
 
 	detectedHeads.clear();
 
@@ -565,21 +561,6 @@ void BlobFinder::drawSensorBox()
 	sensorBox.draw();
 }
 
-void BlobFinder::drawBodyBlobs2d(ofRectangle _rect){
-    float xFactor = _rect.width / captureScreenSize.x;
-    float yFactor = _rect.height / captureScreenSize.y;
-    
-    ofNoFill();
-    for(int i = 0; i < blobEvents.size(); i++){
-		if (blobEvents[i].hasBeenUpdated() && blobEvents[i].isActive()) {
-			ofSetColor(255, 0, 0, 255);
-			ofDrawRectangle(_rect.x + blobEvents[i].baseRectangle2d.x * xFactor, _rect.y + blobEvents[i].baseRectangle2d.y * yFactor, blobEvents[i].baseRectangle2d.width * xFactor, blobEvents[i].baseRectangle2d.height * yFactor);
-			ofDrawBitmapString("blob[" + ofToString(blobEvents[i].mID) + "]\n alive = " + ofToString(blobEvents[i].getAgeInMillis()) + "\n sort = " + ofToString(blobEvents[i].sortPos) + "\n x = " + ofToString(blobEvents[i].headTop.x) + "\n y = " + ofToString(blobEvents[i].headTop.y) + "\n z = " + ofToString(blobEvents[i].headTop.z), _rect.x + blobEvents[i].baseRectangle2d.getCenter().x * xFactor, _rect.y + blobEvents[i].baseRectangle2d.getCenter().y * yFactor);
-		}
-        
-    }
-}
-
 void BlobFinder::drawBodyBlobsBox(){
     for(int i = 0; i < blobEvents.size(); i++){
         //ofLog(OF_LOG_NOTICE, "blob[" + ofToString(i) + "] box =" + ofToString(blobEvents[i].bodyCenter));
@@ -593,15 +574,6 @@ void BlobFinder::drawBodyBlobsHeadTop(){
     }
 }
 
-void BlobFinder::drawGazePoint(){
-	if (useGazePoint.get()) {
-		//gazePointer.setPosition(gazePoint.get());
-		//gazePointer.ofNode::draw();
-		ofDrawSphere(gazePoint.get().x, gazePoint.get().y, gazePoint.get().z, 50);
-		ofDrawLine(gazePoint.get().x, gazePoint.get().y, 0, gazePoint.get().x, gazePoint.get().y, 3000);
-	}
-}
-
 bool BlobFinder::hasParamUpdate(){
     if(parameterHasUpdated){
         parameterHasUpdated = false;
@@ -609,8 +581,6 @@ bool BlobFinder::hasParamUpdate(){
     }
     return false;
 }
-
-
 
 void BlobFinder::updateSensorBox(int & value){
     sensorBox.clear();

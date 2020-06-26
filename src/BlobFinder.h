@@ -52,12 +52,8 @@ public:
     void updateSensorBox(int & value);
     
     void drawSensorBox();
-    void drawBodyBlobs2d(ofRectangle _rect);
-
     void drawBodyBlobsBox();
     void drawBodyBlobsHeadTop();
-    
-    void drawGazePoint();
 
     vector <BlobTracker> blobEvents;
 	vector <BodyBlob> detectedHeads;
@@ -116,7 +112,6 @@ public:
 	ofxGuiGroup *blobSmoothGroup;
 	ofxGuiGroup *sensorBoxGuiGroup;
 	ofxGuiGroup *blobGuiGroup;
-	ofxGuiGroup *blobEyeGroup;
 
     ofParameter<int> sensorBoxLeft;
     ofParameter<int> sensorBoxRight;
@@ -135,9 +130,6 @@ public:
     ofParameter<float> eyeLevel;
     ofParameter<float> eyeInset;
 
-	ofParameter<bool> useGazePoint;
-
-    ofParameter<ofVec3f> gazePoint;
     ofSpherePrimitive gazePointer;
 
 	ofParameter<int> eventBreathSize;
