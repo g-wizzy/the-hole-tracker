@@ -124,7 +124,7 @@ void TrackingNetworkManager::sendMultipleBodiesAlert() {
 }
 
 #ifdef BLOB
-void TrackingNetworkManager::sendBlobData(const BlobTrackeb& blob) {
+void TrackingNetworkManager::sendBlobData(const BlobTracker& blob) {
 	// TODO
 }
 #else

@@ -118,7 +118,7 @@ public:
 
     ofShader shader;
     BlobFinder tracker;
-    bool bUpdateImageMask = false;
+    bool bUpdateImageMask = true;
 
 #else
 

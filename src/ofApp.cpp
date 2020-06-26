@@ -199,6 +199,8 @@ void ofApp::setupViewports(){
 
 #ifdef BLOB
 void ofApp::createGUIDeviceParams() {
+	device = gui.addPanel();
+	
 	device->clear();
 	device->loadTheme("theme/theme_light.json");
 	device->setName("RealSense Device");
@@ -216,8 +218,6 @@ void ofApp::createGUIDeviceParams() {
 	intrinsicGuiGroup.add(realSense->param_deviceProjectorTemparature);
 
 	device->addGroup(intrinsicGuiGroup);
-
-	device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
 }
 #endif
 
