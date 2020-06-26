@@ -7,11 +7,11 @@
 		<sensorFboSize>2</sensorFboSize>
 	</Quality>
 	<SensorBox>
-		<left>500</left>
-		<right>-500</right>
+		<left>1000</left>
+		<right>-1000</right>
 		<front>1000</front>
-		<back>0</back>
-		<top>1000</top>
+		<back>-1000</back>
+		<top>2300</top>
 		<bottom>300</bottom>
 		<Use_Mask>1</Use_Mask>
 	</SensorBox>
@@ -28,3 +28,26 @@
 		<EyeInset>0.8</EyeInset>
 	</Gazing>
 </Tracking___>
+<Tracking>
+	<Quality>
+		<sensorFboSize>1</sensorFboSize>
+		<Smoothing>0.5</Smoothing>
+		<BreathSize>2000</BreathSize>
+		<MaxDistance>400</MaxDistance>
+	</Quality>
+	<SensorBox>
+		<Use_Mask>1</Use_Mask>
+		<left>1000</left>
+		<right>-1000</right>
+		<front>1000</front>
+		<back>-1000</back>
+		<top>2000</top>
+		<bottom>1000</bottom>
+	</SensorBox>
+	<Blobs>
+		<AreaMax>133</AreaMax>
+		<AreaMinStp1>33</AreaMinStp1>
+		<AreaMinStp2>79</AreaMinStp2>
+		<MaxBlobs>5</MaxBlobs>
+	</Blobs>
+</Tracking>
