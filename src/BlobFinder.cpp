@@ -48,18 +48,15 @@ void BlobFinder::initGUI(ofxGui &gui){
 	blobGuiGroup->add(blobAreaMinStp1.set("AreaMinStp1", 10, 0, 255));
 	blobGuiGroup->add(blobAreaMinStp2.set("AreaMinStp2", 10, 0, 255));
 	blobGuiGroup->add(countBlob.set("MaxBlobs", 5, 1, N_MAX_BLOBS));
-	blobGuiGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
+    blobGuiGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
     blobGuiGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
     
-    panel->loadFromFile("trackings.xml");
-
-	loadMask();
+	panel->loadFromFile("trackings.xml");
 }
 
 void BlobFinder::allocate(int &value){
 	captureScreenSize = ofVec2f(pow(2, 8 + value), pow(2, 8 + value));
 	ofLog(OF_LOG_NOTICE, "set capture fbo size to = " + ofToString(pow(2, 8 + value)));
-	gazePointer.setRadius(1000);
 
     fbopixels.allocate(captureScreenSize.x, captureScreenSize.y, OF_PIXELS_RGB);
     

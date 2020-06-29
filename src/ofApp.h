@@ -96,17 +96,10 @@ public:
     ofRectangle viewGrid[N_CAMERAS];
 
     //camera pointers
-    ofCamera * cameras[N_CAMERAS];
     int iMainCamera;
-
-    ofEasyCam cam;
     
     grid mainGrid;
-    
-    shared_ptr<ofBaseGLRenderer> opengl;
-    shared_ptr<ofCairoRenderer> cairo;
-    ofTexture render;
-    
+        
     /////////////
     //Sensor   //
     /////////////
@@ -115,6 +108,7 @@ public:
 
     RSDevicePtr realSense;
     void createGUIDeviceParams();
+    void createGUIPostProcessingParams();
 
     ofShader shader;
     BlobFinder tracker;
@@ -135,9 +129,7 @@ public:
     bool dispRaw;
 
     bool bPreviewPointCloud;
-    
-    ofVboMesh previewmesh;//, capturemesh;
-    
+        
     CaptureMeshArray capMesh;
 	
     void drawPreview();

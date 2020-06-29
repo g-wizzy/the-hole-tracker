@@ -130,8 +130,6 @@ public:
     ofParameter<float> eyeLevel;
     ofParameter<float> eyeInset;
 
-    ofSpherePrimitive gazePointer;
-
 	ofParameter<int> eventBreathSize;
 	ofParameter<float> eventMaxSize;
 	ofParameter<float> smoothFactor;

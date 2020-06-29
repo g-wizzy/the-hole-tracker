@@ -73,12 +73,12 @@ void ofApp::initNuitrack() {
 #endif
 
 void ofApp::initViewports() {
-	float xOffset = VIEWGRID_WIDTH; //ofGetWidth() / 3;
+	float xOffset = VIEWGRID_WIDTH;
 	float yOffset = VIEWPORT_HEIGHT / N_CAMERAS;
 
 	viewMain.x = xOffset;
 	viewMain.y = 0;
-	viewMain.width = ofGetWidth() - xOffset - MENU_WIDTH; //xOffset * 2;
+	viewMain.width = ofGetWidth() - xOffset - MENU_WIDTH;
 	viewMain.height = VIEWPORT_HEIGHT;
 
 	for (int i = 0; i < N_CAMERAS; i++) {
@@ -163,6 +163,7 @@ void ofApp::setup(){
 #ifdef BLOB
 	if (realSense->capture()) {
 		createGUIDeviceParams();
+		createGUIPostProcessingParams();
 	}
 #else
 	nuitracker->run();
@@ -174,7 +175,6 @@ void ofApp::setup(){
 	networkMng.setup(gui);
 
     setupViewports();
-    createHelp();
     
     capMesh.reSize(4);
     
@@ -216,6 +216,29 @@ void ofApp::createGUIDeviceParams() {
 	intrinsicGuiGroup.add(realSense->param_deviceProjectorTemparature);
 
 	device->addGroup(intrinsicGuiGroup);
+
+	// This seems to make the app crash on Linux
+	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+}
+
+void ofApp::createGUIPostProcessingParams() {
+	post = gui.addPanel();
+	post->loadTheme("theme/theme_light.json");
+	post->setName("PostProcessing");
+	post->add(realSense->param_usePostProcessing);
+	post->add(realSense->param_filterDecimation);
+	post->add(realSense->param_filterDecimation_mag);
+	post->add(realSense->param_filterDisparities);
+	post->add(realSense->param_filterSpatial);
+	post->add(realSense->param_filterSpatial_smoothAlpha);
+	post->add(realSense->param_filterSpatial_smoothDelta);
+	post->add(realSense->param_filterSpatial_mag);
+	post->add(realSense->param_filterTemporal);
+	post->add(realSense->param_filterTemporal_smoothAlpha);
+	post->add(realSense->param_filterTemporal_smoothDelta);
+	post->add(realSense->param_filterTemporal_persistency);
+
+	post->loadFromFile("postprocessing.xml");
 }
 #endif
 
@@ -260,12 +283,10 @@ void ofApp::draw() {
 		pointCloudManager.drawRGB(viewGrid[0]);
 		pointCloudManager.drawDepth(viewGrid[1]);
 #endif
-		if (iMainCamera != 2) { // make sure the camera is drawn only once (so the interaction with the mouse works)
-			previewCam.begin(viewGrid[2]);
-			mainGrid.drawPlane(5, 5, false);
-			drawPreview();
-			previewCam.end();
-		}
+		previewCam.begin(viewGrid[2]);
+		mainGrid.drawPlane(5, 5, false);
+		drawPreview();
+		previewCam.end();
         
         switch (iMainCamera) {
             case 0:
@@ -362,11 +383,11 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 
 	if (_mask) {
 		shader.setUniform1i("mask", 1);
-		glPointSize(blobGrain.get() * 4);
+		glPointSize(6 * 4);
 	}
 	else {
 		shader.setUniform1i("mask", 0);
-		glPointSize(blobGrain.get() * 2);
+		glPointSize(6 * 2);
 	}
 	shader.setUniform1f("lowerLimit", lowerLimit);
 	shader.setUniform1f("upperLimit", upperLimit);
@@ -428,7 +449,8 @@ void ofApp::keyPressed(int key){
 			guitransform->saveToFile("transformation.xml");
 #ifdef BLOB
 			tracker.saveMask();
-			//post->saveToFile("postprocessing.xml");
+			post->saveToFile("postprocessing.xml");
+			device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
 #endif
 			break;
 
@@ -439,7 +461,9 @@ void ofApp::keyPressed(int key){
 			reloadTransformMatrix();
 #ifdef BLOB
 			tracker.loadMask();
-			//post->loadFromFile("postprocessing.xml");
+			post->loadFromFile("postprocessing.xml");
+			// This seems to make the app crash on Linux
+			//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
 #endif
 			break;
            
