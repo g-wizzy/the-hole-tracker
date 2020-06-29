@@ -112,6 +112,8 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 			sendBlobData(blobs[i]);
 			done = true;
 		}
+
+		++i;
 	}
 #else
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
