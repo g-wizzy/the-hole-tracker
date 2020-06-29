@@ -68,22 +68,6 @@ void SkeletonFinder::drawSensorBox()
 	sensorBox.draw();
 }
 
-void SkeletonFinder::drawSkeletons2d(ofRectangle _rect) {
-	// TODO ? this seems to draw the skeleton on displays 1-5, which isn't _really_ useful
-	/*float xFactor = _rect.width / captureScreenSize.x;
-	float yFactor = _rect.height / captureScreenSize.y;
-
-	ofNoFill();
-	for(int i = 0; i < skeletonEvents.size(); i++){
-		if (skeletonEvents[i].hasBeenUpdated() && skeletonEvents[i].isActive()) {
-			ofSetColor(255, 0, 0, 255);
-			ofDrawRectangle(_rect.x + skeletonEvents[i].baseRectangle2d.x * xFactor, _rect.y + skeletonEvents[i].baseRectangle2d.y * yFactor, skeletonEvents[i].baseRectangle2d.width * xFactor, skeletonEvents[i].baseRectangle2d.height * yFactor);
-			ofDrawBitmapString("blob[" + ofToString(skeletonEvents[i].mID) + "]\n alive = " + ofToString(skeletonEvents[i].getAgeInMillis()) + "\n sort = " + ofToString(skeletonEvents[i].sortPos) + "\n x = " + ofToString(skeletonEvents[i].headTop.x) + "\n y = " + ofToString(skeletonEvents[i].headTop.y) + "\n z = " + ofToString(skeletonEvents[i].headTop.z), _rect.x + skeletonEvents[i].baseRectangle2d.getCenter().x * xFactor, _rect.y + skeletonEvents[i].baseRectangle2d.getCenter().y * yFactor);
-		}
-
-	}*/
-}
-
 // adapted from ofxNuitrack example
 void SkeletonFinder::drawSkeletons() {
 	static vector<Bone> bones = {

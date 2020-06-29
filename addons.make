@@ -1,4 +1,6 @@
 ofxOsc
 ofxNuitrack
+ofxRealSenseTwo
+ofxOpenCv
 ofxGuiExtended
 ofxNetwork

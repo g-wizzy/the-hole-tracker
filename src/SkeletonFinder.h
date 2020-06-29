@@ -62,7 +62,6 @@ public:
     void update(nuitrack::SkeletonData::Ptr data);
     
     void drawSensorBox();
-    void drawSkeletons2d(ofRectangle _rect);
     void drawSkeletons();
 
     string getShortDesc();
@@ -91,10 +90,6 @@ public:
     ofParameter<int> sensorBoxBack;
 
     ofVboMesh sensorBox;
-   
-    // TODO: What are those
-    ofVec3f normal;
-    float p;
 };
 
 

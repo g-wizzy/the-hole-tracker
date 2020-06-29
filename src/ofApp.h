@@ -1,9 +1,9 @@
 #pragma once
 
+
 #include "ofMain.h"
 #include "ofxNetwork.h"
 #include "ofxGuiExtended.h"
-#include "SkeletonFinder.h"
 #include "Planef.h"
 #include "Linef.h"
 #include "Grid.h"
@@ -12,8 +12,16 @@
 #include "CaptureMeshArray.h"
 #include "PointCloudManager.h"
 
-#include "ofxNuitrack.h"
-#include <nuitrack/Nuitrack.h>
+#include "DetectionMethod.h"
+#ifdef BLOB
+    #include "ofxRealSenseTwo.h"
+    #include <librealsense2/rs.h>
+    #include "BlobFinder.h"
+#else
+    #include "ofxNuitrack.h"
+    #include <nuitrack/Nuitrack.h>
+    #include "SkeletonFinder.h"
+#endif
 
 #include <ofMatrix4x4.h>
 
@@ -32,7 +40,11 @@
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
-using namespace ofxnui;
+#ifdef BLOB
+    using namespace ofxRealSenseTwo;
+#else
+    using namespace ofxnui;
+#endif
 
 //helpfull links during development:
 // https://github.com/openframeworks/openFrameworks/issues/3817
@@ -64,7 +76,7 @@ public:
 	ofTrueTypeFont  monosm;
 	vector<ofPoint> stroke;
 
-    bool bShowVisuals = false;
+    bool bShowVisuals = true;
 
     //////////////////
     //    NETWORK   //
@@ -84,52 +96,52 @@ public:
     ofRectangle viewGrid[N_CAMERAS];
 
     //camera pointers
-    ofCamera * cameras[N_CAMERAS];
     int iMainCamera;
-
-    ofEasyCam cam;
     
     grid mainGrid;
-    
-    shared_ptr<ofBaseGLRenderer> opengl;
-    shared_ptr<ofCairoRenderer> cairo;
-    ofTexture render;
-    
+        
     /////////////
-    //Nuitrack //
+    //Sensor   //
     /////////////
+
+#ifdef BLOB
+
+    RSDevicePtr realSense;
+    void createGUIDeviceParams();
+    void createGUIPostProcessingParams();
+
+    ofShader shader;
+    BlobFinder tracker;
+    bool bUpdateImageMask = false;
+
+#else
 
     void initNuitrack();
+    TrackerRef nuitracker;
+    PointCloudManager pointCloudManager;
+    
+    SkeletonFinder tracker;
+
+#endif
 
     void reloadTransformMatrix();
-        
-    TrackerRef tracker;
-    PointCloudManager pointCloudManager;    
 
     bool dispRaw;
 
     bool bPreviewPointCloud;
-    
-    ofVboMesh previewmesh;//, capturemesh;
-    
+        
     CaptureMeshArray capMesh;
 	
     void drawPreview();
 
-
-    /////////////////
-    //COLOR CONTOUR//
-    /////////////////
-    
-    SkeletonFinder skeletonFinder;
-            
+#ifdef BLOB
+    void drawCapturePointCloud(bool mask);
+#endif
+       
     // used for viewing the point cloud
     ofEasyCam previewCam;
             
     ofMatrix4x4 deviceToWorldTransform;
-    ofMatrix4x4 worldToDeviceTransform;
-    
-    bool bShowSkeletonData = true;
 
     //////////////
     //PROPERTIES//
@@ -138,9 +150,21 @@ public:
 
     ofxGui gui;
     
+    ofxGuiPanel *setupCalib;
+	ofxGuiPanel *device;
+	ofxGuiPanel *post;
 	ofxGuiPanel *guitransform;
+
 	ofParameterGroup transformationGuiGroup;
     ofParameter<ofMatrix4x4> transformation;
+
+    ofParameterGroup intrinsicGuiGroup;
+
+    ofParameter<float> depthCorrectionBase;
+    ofParameter<float> depthCorrectionDivisor;
+    ofParameter<float> pixelSizeCorrector;
+    ofParameter<int> blobGrain;
+    ofParameter<bool> captureVideo;
     
     //////////
     // HELP //
@@ -150,8 +174,10 @@ public:
     bool bShowHelp = true;
 
     void createHelp();
-
+    
+#ifndef BLOB
 private:
     const static ofMatrix4x4 nuitrackViewportToRealSenseViewportTransform;
     static ofMatrix4x4 makeNuitrackToRealSenseTransform();
+#endif
 };
