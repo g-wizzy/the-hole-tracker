@@ -105,15 +105,18 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 
 #ifdef BLOB
     vector<BlobTracker> blobs = bodyFinder.blobEvents;
-	int i = 0;
-	bool done = false;
-	while (i < blobs.size() && !done) {
-		if (blobs[i].isActive() && blobs[i].hasBeenUpdated()) {
-			sendBlobData(blobs[i]);
-			done = true;
+	vector<BlobTracker> activeBlobs;
+	for (auto it = blobs.begin(); it != blobs.end(); ++it) {
+		if (it->isActive() && it->hasBeenUpdated()) {
+			activeBlobs.push_back(*it);
 		}
-
-		++i;
+	}
+	if (activeBlobs.size() > 0) {
+		if (activeBlobs.size() > 1) {
+			sendMultipleBodiesAlert();
+			return;
+		}
+		sendBlobData(activeBlobs[0]);
 	}
 #else
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
@@ -121,6 +124,7 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 		// Only one skeleton is to be on the scene for the perspective to work
 		if (skeletons.size() > 1) {
 			sendMultipleBodiesAlert();
+			return;
 		}
 		sendSkeletonData(skeletons[0]);
 	}
