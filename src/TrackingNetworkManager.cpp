@@ -104,7 +104,15 @@ void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
 void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 
 #ifdef BLOB
-    // TODO
+    vector<BlobTracker> blobs = bodyFinder.blobEvents;
+	int i = 0;
+	bool done = false;
+	while (i < blobs.size() && !done) {
+		if (blobs[i].isActive() && blobs[i].hasBeenUpdated()) {
+			sendBlobData(blobs[i]);
+			done = true;
+		}
+	}
 #else
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
 	if (skeletons.size() > 0) {
@@ -125,7 +133,16 @@ void TrackingNetworkManager::sendMultipleBodiesAlert() {
 
 #ifdef BLOB
 void TrackingNetworkManager::sendBlobData(const BlobTracker& blob) {
-	// TODO
+	ofxOscMessage blobMsg;
+	blobMsg.setAddress("/ks/server/track/headblob");
+
+	blobMsg.addIntArg(mServerID.get());
+
+	blobMsg.addFloatArg(blob.headBlobCenter.x);
+	blobMsg.addFloatArg(blob.headBlobCenter.y);
+	blobMsg.addFloatArg(blob.headBlobCenter.z);
+
+	sendMessageToTrackingClients(blobMsg);
 }
 #else
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
