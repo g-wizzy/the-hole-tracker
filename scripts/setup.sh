@@ -39,3 +39,12 @@ echo "lxsession -e LDXE -s Lubuntu" > ~/.xsession
 
 # display the calibrator script on the desktop for ease of access
 cp Calibration\ tool ~/Desktop
+
+# set startup.sh to launch on session open
+mkdir -p ~/.config/autostart
+cat << EOF > ~./config/autostart/TheHole.desktop
+[Desktop Entry]
+Name=The Hole Tracker
+Exec=lxterminal -e "home/encor/Desktop/thehole/scripts/startup.sh"
+Terminal=true
+EOF
