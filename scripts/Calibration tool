@@ -1,3 +1,13 @@
 #!/bin/bash
 
-~/Desktop/thehole/the-hole-calibrator
+DIR=`dirname "$0"`
+
+# Kill tracker (have to kill the script and its children)
+pkill -P $(cat "$DIR/pid")
+
+# Run calibrator
+$DIR/../the-hole-calibrator
+
+# Relaunch tracker
+sleep 1
+$DIR/startup.sh &
