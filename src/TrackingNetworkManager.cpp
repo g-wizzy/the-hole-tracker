@@ -27,6 +27,10 @@ void TrackingNetworkManager::setup(ofxGui &gui){
 	panel->add<ofxGuiIntInputField>(mServerID.set("ServerID", 0, 0, 10));
 
     panel->loadFromFile("broadcast.xml");
+
+	// This parameter should be settable only from the calibration tool
+	bool visible = false;
+	panel->setVisible(visible);
 }
 
 
