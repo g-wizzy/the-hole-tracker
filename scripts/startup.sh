@@ -1,20 +1,24 @@
 #!/bin/bash
 
-export LD_LIBRARY_PATH="/usr/local/lib/nuitrack" ;
+DIR=`dirname $0`
 
-MODEL=$(`dirname $0`/../realsense-model)
+# Save PID for interruptions due to calibration
+echo $$ > $DIR/pid
+
+MODEL=$($DIR/../realsense-model)
 echo "Model : $MODEL"
 
 if [ "$MODEL" = "D435" ]; then
-	COMMAND=`dirname $0`/../the-hole-blob-tracker
+	COMMAND=the-hole-blob-tracker
 elif [ "$MODEL" = "D415" ]; then
-	COMMAND=`dirname $0`/../the-hole-skeleton-tracker
+	COMMAND=the-hole-skeleton-tracker
 else
 	echo "No RealSense camera detected. Exiting ..."
 	exit 1
 fi
 
-while :
-do
-	echo $COMMAND
+export LD_LIBRARY_PATH="/usr/local/lib/nuitrack"
+until $DIR/../$COMMAND; do
+	echo "Tracker crashed. Relaunching in 1 second"
+	sleep 1
 done
