@@ -463,9 +463,10 @@ void ofApp::createHelp(){
     helpStream << "press h -> to show help \n";
     helpStream << "press s -> to save current settings.\n";
 	helpStream << "press l -> to load last saved settings\n";
+#ifdef BLOB
 	helpStream << "press m -> to update mask image (currently" <<
 		(bUpdateImageMask ? " " : " not ") << "updating)\n";
-	helpStream << "press r -> to show calculation results \n";
+#endif
 
 	help = helpStream.str();
 }
@@ -500,10 +501,12 @@ void ofApp::keyPressed(int key){
 			break;
 
 		case 'm':
+#ifdef BLOB
 			bUpdateImageMask = !bUpdateImageMask;
 			if (bUpdateImageMask) {
 				tracker.clearMask();
 			}
+#endif
 			break;	
             
 		case '1':
