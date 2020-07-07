@@ -179,6 +179,8 @@ void ofApp::setup(){
     capMesh.reSize(4);
     
 	ofLog(OF_LOG_NOTICE) << "Setup over";
+
+	lastSettingsWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
 }
 
 //--------------------------------------------------------------
@@ -247,6 +249,8 @@ void ofApp::update(){
 
 	ofBackground(100, 100, 100);
 
+	checkSettingsUpdate();
+
 #ifdef BLOB
 	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
@@ -269,6 +273,43 @@ void ofApp::update(){
 #endif
 
 	networkMng.update(tracker);
+}
+
+void ofApp::saveSettings()
+{
+	tracker.panel->saveToFile("trackings.xml");
+	networkMng.panel->saveToFile("broadcast.xml");
+	guitransform->saveToFile("transformation.xml");
+
+#ifdef BLOB
+	tracker.saveMask();
+	post->saveToFile("postprocessing.xml");
+	device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
+#endif
+}
+
+void ofApp::loadSettings()
+{
+	tracker.panel->loadFromFile("trackings.xml");
+	networkMng.panel->loadFromFile("broadcast.xml");
+	guitransform->loadFromFile("transformation.xml");
+	reloadTransformMatrix();
+#ifdef BLOB
+	tracker.loadMask();
+	post->loadFromFile("postprocessing.xml");
+	// This seems to make the app crash on Linux
+	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+#endif
+}
+
+void ofApp::checkSettingsUpdate() {
+	std::time_t newLastWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
+
+	if (newLastWriteTime > lastSettingsWriteTime) {
+		lastSettingsWriteTime = newLastWriteTime;
+
+		loadSettings();
+	}
 }
 
 void ofApp::draw() {
@@ -444,27 +485,11 @@ void ofApp::keyPressed(int key){
             break;
  
         case 's':
-            tracker.panel->saveToFile("trackings.xml");
-			networkMng.panel->saveToFile("broadcast.xml");
-			guitransform->saveToFile("transformation.xml");
-#ifdef BLOB
-			tracker.saveMask();
-			post->saveToFile("postprocessing.xml");
-			device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
-#endif
+            saveSettings();
 			break;
 
         case 'l':
-            tracker.panel->loadFromFile("trackings.xml");
-            networkMng.panel->loadFromFile("broadcast.xml");
-			guitransform->loadFromFile("transformation.xml");
-			reloadTransformMatrix();
-#ifdef BLOB
-			tracker.loadMask();
-			post->loadFromFile("postprocessing.xml");
-			// This seems to make the app crash on Linux
-			//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
-#endif
+            loadSettings();
 			break;
            
 		case 'h':

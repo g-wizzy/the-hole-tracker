@@ -11,6 +11,7 @@
 #include "Frustum.h"
 #include "CaptureMeshArray.h"
 #include "PointCloudManager.h"
+#include <ofMatrix4x4.h>
 
 #include "DetectionMethod.h"
 #ifdef BLOB
@@ -23,7 +24,7 @@
     #include "SkeletonFinder.h"
 #endif
 
-#include <ofMatrix4x4.h>
+#include <boost/filesystem/operations.hpp>
 
 #define N_CAMERAS 3
 
@@ -165,7 +166,14 @@ public:
     ofParameter<float> pixelSizeCorrector;
     ofParameter<int> blobGrain;
     ofParameter<bool> captureVideo;
-    
+
+    void saveSettings();
+    void loadSettings();
+
+    void checkSettingsUpdate();
+    const boost::filesystem::path networkSettingsPath = ofFilePath::getAbsolutePath("broadcast.xml");
+    std::time_t lastSettingsWriteTime;    
+
     //////////
     // HELP //
     //////////
