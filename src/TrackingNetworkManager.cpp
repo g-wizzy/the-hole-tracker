@@ -25,14 +25,6 @@ void TrackingNetworkManager::setup(ofxGui &gui){
     panel->loadTheme("theme/theme_light.json");
     panel->setName("Broadcasting");
 	panel->add<ofxGuiIntInputField>(mServerID.set("ServerID", 0, 0, 10));
-    
-    broadcastGroup = panel->addGroup("Broadcast TX");
-    broadcastGroup->add<ofxGuiTextField>(broadcastIP.set("TX IP","127.0.0.1"));
-    broadcastGroup->add<ofxGuiIntInputField>(broadcastPort.set("TX Port", NETWORK_BROADCAST_PORT, NETWORK_BROADCAST_PORT, NETWORK_BROADCAST_PORT + 99));
-    
-    listeningGroup = panel->addGroup("Listening RX");
-    listeningGroup->add<ofxGuiTextField>(listeningIP.set("RX IP",localAddress));
-    listeningGroup->add<ofxGuiIntInputField>(listeningPort.set("RX Port", NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT, NETWORK_LISTENING_PORT + 99));
 
     panel->loadFromFile("broadcast.xml");
 }
@@ -97,7 +89,7 @@ void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
 	// after startup, reinit the receivers
 	// must be a timing problem, though - in debug, stepping through, it works.
 	if(ofGetFrameNum() == 60){
-		serverReceiver.setup(listeningPort.get());
+		serverReceiver.setup(NETWORK_LISTENING_PORT);
 	}
 }
 

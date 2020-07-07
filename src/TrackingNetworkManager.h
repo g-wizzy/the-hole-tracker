@@ -32,7 +32,6 @@
 #define BROADCAST_NOCLIENT_FREQ     1000
 #define BROADCAST_CLIENT_FREQ       10000
 
-#define NETWORK_BROADCAST_PORT 47500
 #define NETWORK_LISTENING_PORT 47600
 
 #ifdef BLOB
@@ -82,19 +81,6 @@ public:
     
     // GUI
     ofxGuiPanel *panel;
-    
-    ofxGuiGroup *colorToggles;
-    
-    ofxGuiGroup *broadcastGroup;
-    
-    ofParameter<string> broadcastIP;
-    ofParameter<int> broadcastPort;
-
-    ofxGuiGroup *listeningGroup;
-    
-    ofParameter<string> listeningIP;
-    ofParameter<int> listeningPort;
-
     ofParameter<int> mServerID;
 };
 
