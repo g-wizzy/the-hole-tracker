@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script assumes the OS to be Lubuntu 18.04.4 LTS
+# and the user to be named "encor"
+
 # install dependencies
 apt -y install curl libglfw3{,-dev} libglew-dev libopencv-{core,imgproc,objdetect}-dev libfreeimage-dev libboost-filesystem-dev libpugixml-dev libopenni{,2}-dev
 # remove automatically installed package -y
@@ -19,7 +22,7 @@ rm libpng.deb
 mv /usr/bin/logname{,bckp}
 cat << EOF > /usr/bin/logname
 #!/bin/bash
-echo \$USER
+echo encor
 EOF
 chmod a+x /usr/bin/logname
 
@@ -42,9 +45,12 @@ cp Calibration\ tool ~/Desktop
 
 # set startup.sh to launch on session open
 mkdir -p ~/.config/autostart
-cat << EOF > ~./config/autostart/TheHole.desktop
+cat << EOF > ~/.config/autostart/thehole.desktop
 [Desktop Entry]
-Name=The Hole Tracker
-Exec=lxterminal -e "home/encor/Desktop/thehole/scripts/startup.sh"
+Name=The Hole
+Type=Application
+Exec=lxterminal -e "/home/encor/Desktop/thehole/scripts/startup.sh"
 Terminal=true
 EOF
+
+echo Setup terminé. Lancez startup.sh pour tester, ou bien redémarrez.
