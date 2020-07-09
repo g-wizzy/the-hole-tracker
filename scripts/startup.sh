@@ -2,9 +2,6 @@
 
 DIR=`dirname $0`
 
-# Save PID for interruptions due to calibration
-echo $$ > $DIR/pid
-
 MODEL=$($DIR/../realsense-model)
 echo "Model : $MODEL"
 
@@ -16,6 +13,9 @@ else
 	echo "No RealSense camera detected. Exiting ..."
 	exit 1
 fi
+
+# Save PID for interruptions due to calibration
+echo $$ > $DIR/pid
 
 export LD_LIBRARY_PATH="/usr/local/lib/nuitrack"
 until $DIR/../$COMMAND; do

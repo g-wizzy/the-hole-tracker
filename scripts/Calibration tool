@@ -1,13 +1,11 @@
 #!/bin/bash
 
-DIR=`dirname "$0"`
+# Find the process of the tracker using the camera
+PID=`pgrep the-hole`
 
-# Kill tracker (have to kill the script and its children)
-pkill -P $(cat "$DIR/pid")
+# Kill tracker (15 = SIGTERM)
+sudo kill -15 $PID
 
 # Run calibrator
-$DIR/../the-hole-calibrator
+/home/encor/thehole/the-hole-calibrator
 
-# Relaunch tracker
-sleep 1
-$DIR/startup.sh &
