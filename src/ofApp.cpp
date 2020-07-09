@@ -168,8 +168,6 @@ void ofApp::setup(){
 #else
 	nuitracker->run();
 #endif
-
-	bPreviewPointCloud = false;
     
 	ofLog(OF_LOG_NOTICE) << "MainAPP: setting up networking...";
 	networkMng.setup(gui);
@@ -179,8 +177,6 @@ void ofApp::setup(){
     capMesh.reSize(4);
     
 	ofLog(OF_LOG_NOTICE) << "Setup over";
-
-	lastSettingsWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
 }
 
 //--------------------------------------------------------------
@@ -192,9 +188,6 @@ void ofApp::setupViewports(){
 	device->setWidth(MENU_WIDTH / 2);
 	device->setPosition(ofGetWidth() - MENU_WIDTH / 2, ofGetHeight() / 2);
 #endif
-
-	networkMng.panel->setWidth(MENU_WIDTH / 2);
-	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 }
 
 #ifdef BLOB
@@ -249,15 +242,15 @@ void ofApp::update(){
 
 	ofBackground(100, 100, 100);
 
-	checkSettingsUpdate();
-
 #ifdef BLOB
 	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
-		if (bUpdateImageMask) {
+		if (maskUpdatesCounter < MASK_UPDATE_CYCLES) {
 			tracker.captureMaskBegin();
 			drawCapturePointCloud(true);
 			tracker.captureMaskEnd();
+
+			maskUpdatesCounter++;
 		} else {
 			// Cature captureCloud to FBO
 			tracker.captureBegin();
@@ -300,16 +293,6 @@ void ofApp::loadSettings()
 	// This seems to make the app crash on Linux
 	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
 #endif
-}
-
-void ofApp::checkSettingsUpdate() {
-	std::time_t newLastWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
-
-	if (newLastWriteTime > lastSettingsWriteTime) {
-		lastSettingsWriteTime = newLastWriteTime;
-
-		loadSettings();
-	}
 }
 
 void ofApp::draw() {
@@ -460,13 +443,9 @@ void ofApp::createHelp(){
     helpStream << "press v -> to show visualizations\n";
 	helpStream << "press 1 - 3 -> to change the viewport\n";
 	helpStream << "press p -> to show pointcloud\n";
+	helpStream << "\n";
     helpStream << "press h -> to show help \n";
-    helpStream << "press s -> to save current settings.\n";
 	helpStream << "press l -> to load last saved settings\n";
-#ifdef BLOB
-	helpStream << "press m -> to update mask image (currently" <<
-		(bUpdateImageMask ? " " : " not ") << "updating)\n";
-#endif
 
 	help = helpStream.str();
 }
@@ -499,15 +478,6 @@ void ofApp::keyPressed(int key){
                 createHelp();
             }
 			break;
-
-		case 'm':
-#ifdef BLOB
-			bUpdateImageMask = !bUpdateImageMask;
-			if (bUpdateImageMask) {
-				tracker.clearMask();
-			}
-#endif
-			break;	
             
 		case '1':
             iMainCamera = 0;

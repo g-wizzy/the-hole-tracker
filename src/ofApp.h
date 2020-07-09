@@ -38,6 +38,7 @@
 #define REALSENSE_VIDEO_WIDTH   848
 #define REALSENSE_VIDEO_HEIGHT  480
 
+#define MASK_UPDATE_CYCLES 100
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
@@ -77,7 +78,7 @@ public:
 	ofTrueTypeFont  monosm;
 	vector<ofPoint> stroke;
 
-    bool bShowVisuals = true;
+    bool bShowVisuals = false;
 
     //////////////////
     //    NETWORK   //
@@ -113,7 +114,7 @@ public:
 
     ofShader shader;
     BlobFinder tracker;
-    bool bUpdateImageMask = false;
+    int maskUpdatesCounter = 0;
 
 #else
 
@@ -129,7 +130,7 @@ public:
 
     bool dispRaw;
 
-    bool bPreviewPointCloud;
+    bool bPreviewPointCloud = false;
         
     CaptureMeshArray capMesh;
 	
@@ -168,11 +169,7 @@ public:
     ofParameter<bool> captureVideo;
 
     void saveSettings();
-    void loadSettings();
-
-    void checkSettingsUpdate();
-    const boost::filesystem::path networkSettingsPath = ofFilePath::getAbsolutePath("broadcast.xml");
-    std::time_t lastSettingsWriteTime;    
+    void loadSettings();  
 
     //////////
     // HELP //
