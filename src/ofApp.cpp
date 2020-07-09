@@ -179,8 +179,6 @@ void ofApp::setup(){
     capMesh.reSize(4);
     
 	ofLog(OF_LOG_NOTICE) << "Setup over";
-
-	lastSettingsWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
 }
 
 //--------------------------------------------------------------
@@ -192,9 +190,6 @@ void ofApp::setupViewports(){
 	device->setWidth(MENU_WIDTH / 2);
 	device->setPosition(ofGetWidth() - MENU_WIDTH / 2, ofGetHeight() / 2);
 #endif
-
-	networkMng.panel->setWidth(MENU_WIDTH / 2);
-	networkMng.panel->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 }
 
 #ifdef BLOB
@@ -249,8 +244,6 @@ void ofApp::update(){
 
 	ofBackground(100, 100, 100);
 
-	checkSettingsUpdate();
-
 #ifdef BLOB
 	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
@@ -300,16 +293,6 @@ void ofApp::loadSettings()
 	// This seems to make the app crash on Linux
 	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
 #endif
-}
-
-void ofApp::checkSettingsUpdate() {
-	std::time_t newLastWriteTime = boost::filesystem::last_write_time(networkSettingsPath);
-
-	if (newLastWriteTime > lastSettingsWriteTime) {
-		lastSettingsWriteTime = newLastWriteTime;
-
-		loadSettings();
-	}
 }
 
 void ofApp::draw() {

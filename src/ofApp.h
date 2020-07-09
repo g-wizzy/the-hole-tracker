@@ -168,11 +168,7 @@ public:
     ofParameter<bool> captureVideo;
 
     void saveSettings();
-    void loadSettings();
-
-    void checkSettingsUpdate();
-    const boost::filesystem::path networkSettingsPath = ofFilePath::getAbsolutePath("broadcast.xml");
-    std::time_t lastSettingsWriteTime;    
+    void loadSettings();  
 
     //////////
     // HELP //
