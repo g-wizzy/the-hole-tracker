@@ -31,6 +31,9 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxBottom.set("bottom", 1000));
 
 	panel->loadFromFile("trackings.xml");
+
+	bool visible = false;
+	panel->setVisible(visible);
 }
 
 void SkeletonFinder::setTransformMatrix(ofMatrix4x4* mat) {

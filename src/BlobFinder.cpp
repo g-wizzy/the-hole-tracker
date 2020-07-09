@@ -52,6 +52,9 @@ void BlobFinder::initGUI(ofxGui &gui){
     blobGuiGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
     
 	panel->loadFromFile("trackings.xml");
+
+	bool visible = false;
+	panel->setVisible(visible);
 }
 
 void BlobFinder::allocate(int &value){
