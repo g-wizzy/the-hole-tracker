@@ -14,11 +14,16 @@ else
 	exit 1
 fi
 
-# Save PID for interruptions due to calibration
-echo $$ > $DIR/pid
-
 export LD_LIBRARY_PATH="/usr/local/lib/nuitrack"
-until $DIR/../$COMMAND; do
-	echo "Tracker crashed. Relaunching in 1 second"
-	sleep 1
+while :
+do
+	$DIR/../$COMMAND
+	if [ $? -eq 0 ]
+	then
+		echo "Tracker closed. Assuming from the calibrator. Relaunching in 20 seconds"
+		sleep 20
+	else
+		echo "Tracker crashed. Attempting to relaunch in 1 second"
+		sleep 1
+	fi
 done
