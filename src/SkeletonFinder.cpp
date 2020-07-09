@@ -12,7 +12,7 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	panel = gui.addPanel();
 
 	panel->loadTheme("theme/theme_light.json");
-	panel->setName("Tracking...");
+	panel->setName("Tracking");
 
 	sensorBoxLeft.addListener(this, &SkeletonFinder::updateSensorBox);
 	sensorBoxRight.addListener(this, &SkeletonFinder::updateSensorBox);
@@ -22,7 +22,7 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	sensorBoxBottom.addListener(this, &SkeletonFinder::updateSensorBox);
 
 	sensorBoxGuiGroup = panel->addGroup("SensorBox");
-	sensorBoxGuiGroup->add(filtering.set("Filtering", true));
+	sensorBoxGuiGroup->add(filtering.set("Filtering", false));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxLeft.set("left", 1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxRight.set("right", -1000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxFront.set("front", 1000));
