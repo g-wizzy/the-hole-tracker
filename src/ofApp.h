@@ -78,7 +78,7 @@ public:
 	ofTrueTypeFont  monosm;
 	vector<ofPoint> stroke;
 
-    bool bShowVisuals = true;
+    bool bShowVisuals = false;
 
     //////////////////
     //    NETWORK   //
@@ -130,7 +130,7 @@ public:
 
     bool dispRaw;
 
-    bool bPreviewPointCloud;
+    bool bPreviewPointCloud = false;
         
     CaptureMeshArray capMesh;
 	

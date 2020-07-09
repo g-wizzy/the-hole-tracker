@@ -168,8 +168,6 @@ void ofApp::setup(){
 #else
 	nuitracker->run();
 #endif
-
-	bPreviewPointCloud = false;
     
 	ofLog(OF_LOG_NOTICE) << "MainAPP: setting up networking...";
 	networkMng.setup(gui);
