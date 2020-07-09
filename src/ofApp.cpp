@@ -247,10 +247,12 @@ void ofApp::update(){
 #ifdef BLOB
 	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
-		if (bUpdateImageMask) {
+		if (maskUpdatesCounter < MASK_UPDATE_CYCLES) {
 			tracker.captureMaskBegin();
 			drawCapturePointCloud(true);
 			tracker.captureMaskEnd();
+
+			maskUpdatesCounter++;
 		} else {
 			// Cature captureCloud to FBO
 			tracker.captureBegin();
@@ -443,13 +445,9 @@ void ofApp::createHelp(){
     helpStream << "press v -> to show visualizations\n";
 	helpStream << "press 1 - 3 -> to change the viewport\n";
 	helpStream << "press p -> to show pointcloud\n";
+	helpStream << "\n";
     helpStream << "press h -> to show help \n";
-    helpStream << "press s -> to save current settings.\n";
 	helpStream << "press l -> to load last saved settings\n";
-#ifdef BLOB
-	helpStream << "press m -> to update mask image (currently" <<
-		(bUpdateImageMask ? " " : " not ") << "updating)\n";
-#endif
 
 	help = helpStream.str();
 }
@@ -482,15 +480,6 @@ void ofApp::keyPressed(int key){
                 createHelp();
             }
 			break;
-
-		case 'm':
-#ifdef BLOB
-			bUpdateImageMask = !bUpdateImageMask;
-			if (bUpdateImageMask) {
-				tracker.clearMask();
-			}
-#endif
-			break;	
             
 		case '1':
             iMainCamera = 0;

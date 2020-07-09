@@ -38,6 +38,7 @@
 #define REALSENSE_VIDEO_WIDTH   848
 #define REALSENSE_VIDEO_HEIGHT  480
 
+#define MASK_UPDATE_CYCLES 100
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
@@ -113,7 +114,7 @@ public:
 
     ofShader shader;
     BlobFinder tracker;
-    bool bUpdateImageMask = false;
+    int maskUpdatesCounter = 0;
 
 #else
 
