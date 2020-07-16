@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # install dependencies
-apt -y install curl libglfw3{,-dev} libglew-dev libopencv-{core,imgproc,objdetect}-dev libfreeimage-dev libboost-filesystem-dev libpugixml-dev libopenni{,2}-dev
+apt -y install curl libglfw3{,-dev} libglew-dev libopencv-{core,imgproc,objdetect}-dev libfreeimage-dev libboost-filesystem-dev libpugixml-dev libopenni{,2}-dev xvfb
 # remove automatically installed package -y
 apt -y purge openni-utils -y
 
