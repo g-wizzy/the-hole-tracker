@@ -246,6 +246,9 @@ void ofApp::update(){
 	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
 
 		if (maskUpdatesCounter < MASK_UPDATE_CYCLES) {
+			if (maskUpdatesCounter == 0) {
+				tracker.clearMask();
+			}
 			tracker.captureMaskBegin();
 			drawCapturePointCloud(true);
 			tracker.captureMaskEnd();
@@ -270,7 +273,7 @@ void ofApp::update(){
 
 void ofApp::saveSettings()
 {
-	tracker.panel->saveToFile("trackings.xml");
+	tracker.panel->saveToFile("tracking.xml");
 	networkMng.panel->saveToFile("broadcast.xml");
 	guitransform->saveToFile("transformation.xml");
 
@@ -283,7 +286,7 @@ void ofApp::saveSettings()
 
 void ofApp::loadSettings()
 {
-	tracker.panel->loadFromFile("trackings.xml");
+	tracker.panel->loadFromFile("tracking.xml");
 	networkMng.panel->loadFromFile("broadcast.xml");
 	guitransform->loadFromFile("transformation.xml");
 	reloadTransformMatrix();
