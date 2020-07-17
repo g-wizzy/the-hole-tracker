@@ -51,7 +51,7 @@ void BlobFinder::initGUI(ofxGui &gui){
     blobGuiGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
     blobGuiGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
     
-	panel->loadFromFile("trackings.xml");
+	panel->loadFromFile("tracking.xml");
 
 	bool visible = false;
 	panel->setVisible(visible);
@@ -226,7 +226,7 @@ void BlobFinder::update(){
 		minID = (blobEvents[e].mID >= minID) ? blobEvents[e].mID + 1 : minID;
 	}
 
-	if (useMask.get()) {
+	if (true || useMask.get()) {
 		fbo.begin();
 		// Cleaning everthing with alpha mask on 0 in order to make it transparent for default
 		ofClear(0, 0, 0, 0);

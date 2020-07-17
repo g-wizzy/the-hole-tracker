@@ -30,7 +30,7 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxTop.set("top", 2000));
 	sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxBottom.set("bottom", 1000));
 
-	panel->loadFromFile("trackings.xml");
+	panel->loadFromFile("tracking.xml");
 
 	bool visible = false;
 	panel->setVisible(visible);
