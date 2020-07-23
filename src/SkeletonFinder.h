@@ -64,8 +64,6 @@ public:
     void drawSensorBox();
     void drawSkeletons();
 
-    string getShortDesc();
-
     vector<Skeleton> getSkeletons() const;
     
 private:
