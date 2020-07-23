@@ -4,7 +4,7 @@
 //
 //  Created by maybites on 14.02.14.
 //
-//
+//	Modified by Pierre Bürki on 23.07.2020
 
 #include "TrackingNetworkManager.h"
 
@@ -116,9 +116,11 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 	}
 #else
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
-	if (skeletons.size() > 0) {
+	if (skeletons.size() > 0)
+	{
 		// Only one skeleton is to be on the scene for the perspective to work
-		if (skeletons.size() > 1) {
+		if (skeletons.size() > 1)
+		{
 			sendMultipleBodiesAlert();
 			return;
 		}
@@ -127,14 +129,23 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 #endif
 }
 
-void TrackingNetworkManager::sendMultipleBodiesAlert() {
+/**
+ * Send a special message via OSC to signal multiple bodies
+ */
+void TrackingNetworkManager::sendMultipleBodiesAlert()
+{
 	ofxOscMessage alertMsg;
 	alertMsg.setAddress("/ks/server/track/multiple-bodies");
 	sendMessageToTrackingClients(alertMsg);
 }
 
 #ifdef BLOB
-void TrackingNetworkManager::sendBlobData(const BlobTracker& blob) {
+/**
+ * Send a given blob via OSC
+ * Slighty modified from the original so that it only sends the blob's head
+ */
+void TrackingNetworkManager::sendBlobData(const BlobTracker& blob)
+{
 	ofxOscMessage blobMsg;
 	blobMsg.setAddress("/ks/server/track/headblob");
 
@@ -147,7 +158,11 @@ void TrackingNetworkManager::sendBlobData(const BlobTracker& blob) {
 	sendMessageToTrackingClients(blobMsg);
 }
 #else
-void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel) {
+/**
+ * Send a given skeleton via OSC
+ */
+void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel)
+{
 	ofxOscMessage skeletonMsg;
 	skeletonMsg.setAddress("/ks/server/track/skeleton");
 

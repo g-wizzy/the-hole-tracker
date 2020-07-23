@@ -1,14 +1,17 @@
 //
 //  SkeletonFinder.cpp
 //
-//  Created by Pierre B�rki on 19.05.20.
+//  Created by Pierre Bürki on 19.05.20.
 //  Adapted from BlobFinder.cpp by maybites (14.02.14).
 //
 
 #include "SkeletonFinder.h"
 
-
-void SkeletonFinder::initGUI(ofxGui& gui) {
+/**
+ * Creates and populates the GUI elements
+ */
+void SkeletonFinder::initGUI(ofxGui& gui)
+{
 	panel = gui.addPanel();
 
 	panel->loadTheme("theme/theme_light.json");
@@ -36,16 +39,27 @@ void SkeletonFinder::initGUI(ofxGui& gui) {
 	panel->setVisible(visible);
 }
 
-void SkeletonFinder::setTransformMatrix(ofMatrix4x4* mat) {
+/**
+ * Set the transformation matrix pointer
+ */
+void SkeletonFinder::setTransformMatrix(ofMatrix4x4* mat)
+{
 	transformMatrix = mat;
 }
 
-void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
+/**
+ * Called each time a skeleton is detected on a frame
+ * Copy the data for later use
+ */
+void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data)
+{
 	skeletons.clear();
 	// TODO: filter using the capture bounds
-	for (nuitrack::Skeleton skel : data->getSkeletons()) {
+	for (nuitrack::Skeleton skel : data->getSkeletons())
+	{
 		vector<Joint> joints;
-		for (nuitrack::Joint joint : skel.joints) {
+		for (nuitrack::Joint joint : skel.joints)
+		{
 			glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
 
 			// ofMatrix multiplication works in reverse
@@ -55,24 +69,36 @@ void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data) {
 		}
 
 		Skeleton skeleton(skel.id, joints);
-		if (!filtering.get() || isSkeletonInBounds(skeleton)) {
+		if (!filtering.get() || isSkeletonInBounds(skeleton))
+		{
 			skeletons.push_back(skeleton);
 		}
-
 	}
 }
 
-vector<Skeleton> SkeletonFinder::getSkeletons() const {
+/**
+ * Getter for the skeletons container
+ */
+vector<Skeleton> SkeletonFinder::getSkeletons() const
+{
 	return skeletons;
 }
 
+/**
+ * Draw the sensor box
+ * Note that the sensor box plays a role only if "filtering" is activated
+ */
 void SkeletonFinder::drawSensorBox()
 {
 	sensorBox.draw();
 }
 
-// adapted from ofxNuitrack example
-void SkeletonFinder::drawSkeletons() {
+/**
+ * Draw all the skeletons in this->skeletons
+ * Adapted from ofxNuitrack example
+ */
+void SkeletonFinder::drawSkeletons()
+{
 	static vector<Bone> bones = {
 		Bone(nuitrack::JOINT_WAIST, nuitrack::JOINT_TORSO, glm::vec3(0, 1, 0)),
 		Bone(nuitrack::JOINT_TORSO, nuitrack::JOINT_NECK, glm::vec3(0, 1, 0)),
@@ -98,8 +124,10 @@ void SkeletonFinder::drawSkeletons() {
 	};
 
 	ofSetColor(0, 255, 0);
-	for (Skeleton skel : skeletons) {
-		for (Bone bone : bones) {
+	for (Skeleton skel : skeletons)
+	{
+		for (Bone bone : bones)
+		{
 			auto j1 = skel.joints[bone.from];
 			auto j2 = skel.joints[bone.to];
 
@@ -112,23 +140,13 @@ void SkeletonFinder::drawSkeletons() {
 	}
 }
 
-string SkeletonFinder::getShortDesc()
+/**
+ * Called each time the sensor box boundaries are changed
+ * 
+ * Not modified from BlobFinder.cpp
+ */
+void SkeletonFinder::updateSensorBox(int& value)
 {
-	if (skeletons.size() == 0) {
-		return "No skeleton found";
-	} else {
-		ostringstream s;
-		Skeleton skel = skeletons[0];
-		auto pos = skel.joints[nuitrack::JOINT_HEAD].pos;
-		s << "Head position : (" <<
-			pos.x << ", " <<
-			pos.y << ", " <<
-			pos.z << ")";
-		return s.str();
-	}
-}
-
-void SkeletonFinder::updateSensorBox(int& value) {
 	sensorBox.clear();
 	sensorBox.setMode(OF_PRIMITIVE_LINES);
 
@@ -161,7 +179,11 @@ void SkeletonFinder::updateSensorBox(int& value) {
 	//captureCam.
 }
 
-bool SkeletonFinder::isSkeletonInBounds(const Skeleton& skel) {
+/**
+ * Returns true if the skeleton's head is in the sensor box
+ */
+bool SkeletonFinder::isSkeletonInBounds(const Skeleton& skel)
+{
 	glm::vec3 headPos = skel.joints[nuitrack::JOINT_HEAD].pos;
 	return headPos.x < sensorBoxLeft.get() * SCALE
 		&& headPos.x > sensorBoxRight.get() * SCALE

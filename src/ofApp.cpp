@@ -1,3 +1,11 @@
+//
+//  ofApp.cpp
+//  kinectTCPServer
+//
+//  Created by maybites on 14.02.14.
+//
+//	Edited by Pierre Bürki on 23.07.2020.
+
 #include "ofApp.h"
 
 #define RECONNECT_TIME 400
@@ -7,7 +15,11 @@
 
 #ifndef BLOB
 
-ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
+/**
+ * Create the constant nuitrack -> realsense transformation matrix
+ */
+ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform()
+{
 	// Thankfully this matrix is symmetric, so we need not worry about the row-major-ness
 	// of the matrix object
 	float mat[16] = {
@@ -21,9 +33,13 @@ ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform() {
 
 const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
 
-void ofApp::initNuitrack() {
+/**
+ * Set up Nuitrack's config and callbacks 
+ */
+void ofApp::initNuitrack()
+{
 	nuitracker = ofxnui::Tracker::create();
-	nuitracker->init("");
+	nuitracker->init();
 
 	// depth feed settings
 	nuitracker->setConfigValue("Realsense2Module.Depth.FPS", "30");
@@ -51,21 +67,34 @@ void ofApp::initNuitrack() {
 	nuitracker->setConfigValue("Segmentation.MAX_DISTANCE", "7000");
 	nuitracker->setConfigValue("Skeletonization.MaxDistance", "7000");
 
-	nuitracker->setIssuesCallback([this](nuitrack::IssuesData::Ptr data) {
-		auto issue = data->getIssue<nuitrack::Issue>();
-		if (issue) {
-			ofLogNotice() << "Issue detected! " << issue->getName() << " [" << issue->getId() << "]";
+	nuitracker->setIssuesCallback(
+		[this](nuitrack::IssuesData::Ptr data)
+		{
+			auto issue = data->getIssue<nuitrack::Issue>();
+			if (issue)
+			{
+				ofLogNotice() << "Issue detected! " << issue->getName() << " [" << issue->getId() << "]";
+			}
 		}
-		});
-	nuitracker->setRGBCallback([this](nuitrack::RGBFrame::Ptr data) {
-		pointCloudManager.updateRGB(data);
-		});
-	nuitracker->setDepthCallback([this](nuitrack::DepthFrame::Ptr data) {
-		pointCloudManager.updateDepth(data);
-		});
-	nuitracker->setSkeletonCallback([this](nuitrack::SkeletonData::Ptr data) {
-		tracker.update(data);
-		});
+	);
+	nuitracker->setRGBCallback(
+		[this](nuitrack::RGBFrame::Ptr data)
+		{
+			pointCloudManager.updateRGB(data);
+		}
+	);
+	nuitracker->setDepthCallback(
+		[this](nuitrack::DepthFrame::Ptr data)
+		{
+			pointCloudManager.updateDepth(data);
+		}
+	);
+	nuitracker->setSkeletonCallback(
+		[this](nuitrack::SkeletonData::Ptr data)
+		{
+			tracker.update(data);
+		}
+	);
 
 	pointCloudManager.setDepthSensor(nuitracker->depthTracker);
 }
@@ -105,15 +134,19 @@ void ofApp::setupTransformGui() {
 	transformationGuiGroup.add(transformation.set("Transform", ofMatrix4x4()));
 	guitransform->addGroup(transformationGuiGroup);
 
-	// The GUI apparently cannot display matrices
-	// Also this method apparently requires a reference for some reason
+	// This method apparently requires a reference for some reason
 	bool visible = false;
 	guitransform->setVisible(visible);
 
 	reloadTransformMatrix();
 }
 
-void ofApp::reloadTransformMatrix() {
+/**
+ * Load the transformation matrix from the xml file
+ * Also applies the nuitrack->realsense transformation if needed
+ */
+void ofApp::reloadTransformMatrix()
+{
 	guitransform->loadFromFile("transformation.xml");
 
 #ifdef BLOB
@@ -124,7 +157,8 @@ void ofApp::reloadTransformMatrix() {
 #endif
 }
 
-void ofApp::setup(){
+void ofApp::setup()
+{
 
 #ifdef BLOB
 	if (ofIsGLProgrammableRenderer()) {
@@ -136,12 +170,8 @@ void ofApp::setup(){
 
 	ofLog(OF_LOG_NOTICE) << "MainAPP: looking for RealSense Device...";
 
-	// ofSetLogLevel(OF_LOG_VERBOSE);
-
 	realSense = RSDevice::createUniquePtr();
-
 	realSense->checkConnectedDialog();
-
 	realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
 
 	ofLog(OF_LOG_NOTICE) << "... RealSense Device found.";
@@ -161,7 +191,8 @@ void ofApp::setup(){
 	ofLog(OF_LOG_NOTICE) << "MainAPP: starting attached Device...";
 
 #ifdef BLOB
-	if (realSense->capture()) {
+	if (realSense->capture())
+	{
 		createGUIDeviceParams();
 		createGUIPostProcessingParams();
 	}
@@ -238,15 +269,18 @@ void ofApp::createGUIPostProcessingParams() {
 #endif
 
 //--------------------------------------------------------------
-void ofApp::update(){
+void ofApp::update()
+{
 
 	ofBackground(100, 100, 100);
 
 #ifdef BLOB
-	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO)) {
-
-		if (maskUpdatesCounter < MASK_UPDATE_CYCLES) {
-			if (maskUpdatesCounter == 0) {
+	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO))
+	{
+		if (maskUpdatesCounter < MASK_UPDATE_CYCLES)
+		{
+			if (maskUpdatesCounter == 0)
+			{
 				tracker.clearMask();
 			}
 			tracker.captureMaskBegin();
@@ -254,7 +288,9 @@ void ofApp::update(){
 			tracker.captureMaskEnd();
 
 			maskUpdatesCounter++;
-		} else {
+		} 
+		else
+		{
 			// Cature captureCloud to FBO
 			tracker.captureBegin();
 			drawCapturePointCloud(false);
@@ -271,6 +307,9 @@ void ofApp::update(){
 	networkMng.update(tracker);
 }
 
+/**
+ * Save current settings to the various xml files
+ */
 void ofApp::saveSettings()
 {
 	tracker.panel->saveToFile("tracking.xml");
@@ -284,6 +323,9 @@ void ofApp::saveSettings()
 #endif
 }
 
+/**
+ * Load the settings from the various xml files
+ */
 void ofApp::loadSettings()
 {
 	tracker.panel->loadFromFile("tracking.xml");

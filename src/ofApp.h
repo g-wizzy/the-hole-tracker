@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "ofMain.h"
 #include "ofxNetwork.h"
 #include "ofxGuiExtended.h"
