@@ -216,6 +216,8 @@ void ofApp::setupViewports(){
 	tracker.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
 
 #ifdef BLOB
+	post->setWidth(MENU_WIDTH / 2);
+	post->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 	device->setWidth(MENU_WIDTH / 2);
 	device->setPosition(ofGetWidth() - MENU_WIDTH / 2, ofGetHeight() / 2);
 #endif
