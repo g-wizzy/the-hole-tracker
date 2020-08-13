@@ -102,7 +102,7 @@ void ofApp::initNuitrack()
 #endif
 
 void ofApp::initViewports() {
-	float xOffset = VIEWGRID_WIDTH;
+	float xOffset = 0;
 	float yOffset = VIEWPORT_HEIGHT / N_CAMERAS;
 
 	viewMain.x = xOffset;
@@ -123,6 +123,7 @@ void ofApp::initViewports() {
 	previewCam.setUpAxis(glm::vec3(0, 0, 1));
 	previewCam.setTranslationSensitivity(2., 2., 2.);
 	previewCam.setNearClip(0.001f);
+	previewCam.setPosition(0, 0, 12);
 }
 
 void ofApp::setupTransformGui() {
@@ -346,52 +347,14 @@ void ofApp::draw() {
 	ofSetColor(255, 255, 255);
 
     if(bShowVisuals){
-        // Draw viewport previews
-#ifdef BLOB
-		realSense->drawVideoStream(viewGrid[0]);
-		realSense->drawDepthStream(viewGrid[1]);
-#else
-		pointCloudManager.drawRGB(viewGrid[0]);
-		pointCloudManager.drawDepth(viewGrid[1]);
-#endif
-		previewCam.begin(viewGrid[2]);
-		mainGrid.drawPlane(5, 5, false);
+
+		previewCam.begin(viewMain);
+		mainGrid.drawPlane(5., 5, false);
 		drawPreview();
 		previewCam.end();
-        
-        switch (iMainCamera) {
-            case 0:
-#ifdef BLOB
-				realSense->drawVideoStream(viewMain);
-#else
-				pointCloudManager.drawRGB(viewMain);
-#endif
-                break;
-            case 1:
-#ifdef BLOB
-				realSense->drawDepthStream(viewMain);
-#else
-				pointCloudManager.drawDepth(viewMain);
-#endif
-                break;
-            case 2:
-                previewCam.begin(viewMain);
-                mainGrid.drawPlane(5., 5, false);
-                drawPreview();
-                previewCam.end();
-                break;
-            default:
-                break;
-        }
 
         glDisable(GL_DEPTH_TEST);
         ofPushStyle();
-
-        // Highlight background of selected camera
-        ofSetColor(255, 0, 255, 255);
-        ofNoFill();
-        ofSetLineWidth(3);
-        ofDrawRectangle(viewGrid[iMainCamera]);
     }    
 
 	// draw instructions
@@ -413,14 +376,13 @@ void ofApp::drawPreview() {
 
 	ofPushMatrix();
 
-	if (bPreviewPointCloud) {
-		ofMultMatrix(deviceToWorldTransform);
+	ofMultMatrix(deviceToWorldTransform);
 #ifdef BLOB
-		realSense->draw();
+	realSense->draw();
 #else
-		pointCloudManager.drawPointCloud();
+	pointCloudManager.drawPointCloud();
 #endif
-	}
+
 	ofPopMatrix();
 	
 	ofPushStyle();
