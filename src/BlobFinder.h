@@ -124,8 +124,8 @@ public:
     ofParameter<int> nearFrustum;
     ofParameter<int> farFrustum;
        
-	ofParameter<int> blobAreaMinStp2;
-	ofParameter<int> blobAreaMinStp1;
+    ofParameter<int> filteringRounds;
+	ofParameter<int> blobAreaMin;
 	ofParameter<int> blobAreaMax;
     ofParameter<int> countBlob;
 
