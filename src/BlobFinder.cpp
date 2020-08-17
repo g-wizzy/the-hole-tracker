@@ -207,6 +207,26 @@ void BlobFinder::loadMask() {
 	maskFbo.end();
 }
 
+void BlobFinder::filterTrailingPixels() {
+	filteredImage = grayImage;
+
+	// close
+	filteredImage.dilate();
+	filteredImage.erode();
+
+	// open
+	filteredImage.erode();
+	filteredImage.dilate();
+
+	// close
+	filteredImage.dilate();
+	filteredImage.erode();
+
+	// open
+	filteredImage.erode();
+	filteredImage.dilate();
+}
+
 void BlobFinder::update(){
 	ofColor white = ofColor::white;
 	ofColor black = ofColor::black;
@@ -223,7 +243,7 @@ void BlobFinder::update(){
 		minID = (blobEvents[e].mID >= minID) ? blobEvents[e].mID + 1 : minID;
 	}
 
-	if (true || useMask.get()) {
+	if (useMask.get()) {
 		fbo.begin();
 		// Cleaning everthing with alpha mask on 0 in order to make it transparent for default
 		ofClear(0, 0, 0, 0);
@@ -246,8 +266,7 @@ void BlobFinder::update(){
 
     // load grayscale captured depth image from the color source
     grayImage.setFromColorImage(colorImg);
-    
-    //grayImage.blurHeavily();
+	filterTrailingPixels();
     
 	ofPixelsRef blobRefPixls = blobRef.getPixels();
     
@@ -283,7 +302,7 @@ void BlobFinder::update(){
 
 	detectedHeads.clear();
 
-	contourFinder.findContours(grayImage, minBlobSize, maxBlobSize, countBlob.get(), false);
+	contourFinder.findContours(filteredImage, minBlobSize, maxBlobSize, countBlob.get(), false);
 
     for (int i = 0; i < contourFinder.nBlobs; i++){
         ofRectangle bounds = contourFinder.blobs[i].boundingRect;

@@ -46,6 +46,7 @@ public:
 	void loadMask();
 	void saveMask();
 
+    void filterTrailingPixels();
     void update();
     bool hasParamUpdate();
 
@@ -91,6 +92,7 @@ public:
     
 	ofxCvGrayscaleImage blobRef; // body blob reference image
 	ofxCvGrayscaleImage grayImage; // grayscale depth image
+    ofxCvGrayscaleImage filteredImage; // grayscale depth image with trailing pixels filtered out
     ofxCvGrayscaleImage grayEyeLevel; // the eyelevel thresholded image
     ofxCvGrayscaleImage grayThreshFar; // the far thresholded image
  
