@@ -44,9 +44,10 @@ void BlobFinder::initGUI(ofxGui &gui){
     sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxBottom.set("bottom", 1000));
 
 	blobGuiGroup = panel->addGroup("Blobs");
+	blobGuiGroup->add(threshold.set("Threshold", false));
+	blobGuiGroup->add(filteringRounds.set("FilteringRounds", 1, 0, 3));
 	blobGuiGroup->add(blobAreaMax.set("AreaMax", 5, 0, 255));
-	blobGuiGroup->add(blobAreaMinStp1.set("AreaMinStp1", 10, 0, 255));
-	blobGuiGroup->add(blobAreaMinStp2.set("AreaMinStp2", 10, 0, 255));
+	blobGuiGroup->add(blobAreaMin.set("AreaMin", 10, 0, 255));
 	blobGuiGroup->add(countBlob.set("MaxBlobs", 5, 1, N_MAX_BLOBS));
     blobGuiGroup->add(eyeLevel.set("EyeLevel", 140, 0, 200));
     blobGuiGroup->add(eyeInset.set("EyeInset", .8, 0, 1));
@@ -210,21 +211,15 @@ void BlobFinder::loadMask() {
 void BlobFinder::filterTrailingPixels() {
 	filteredImage = grayImage;
 
-	// close
-	filteredImage.dilate();
-	filteredImage.erode();
+	if (threshold.get()) filteredImage.threshold(0);
 
-	// open
-	filteredImage.erode();
-	filteredImage.dilate();
-
-	// close
-	filteredImage.dilate();
-	filteredImage.erode();
-
-	// open
-	filteredImage.erode();
-	filteredImage.dilate();
+	filteredImage.dilate_3x3();
+	for (int i = 0; i <= filteringRounds.get(); i++) {
+		filteredImage.erode_3x3();
+	}
+	for (int i = 0; i <= filteringRounds.get(); i++) {
+		filteredImage.dilate_3x3();
+	}
 }
 
 void BlobFinder::update(){
@@ -297,7 +292,7 @@ void BlobFinder::update(){
 					  FIND BODY CONTOURS
 	*****************************************************************/
 
-	int minBlobSize = pow(blobAreaMinStp1.get() * sensorFboSize.get(), 2);
+	int minBlobSize = pow(blobAreaMin.get() * sensorFboSize.get(), 2);
 	int maxBlobSize = pow(blobAreaMax.get() * sensorFboSize.get(), 2);
 
 	detectedHeads.clear();
