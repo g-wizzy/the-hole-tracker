@@ -44,6 +44,7 @@ void BlobFinder::initGUI(ofxGui &gui){
     sensorBoxGuiGroup->add<ofxGuiIntInputField>(sensorBoxBottom.set("bottom", 1000));
 
 	blobGuiGroup = panel->addGroup("Blobs");
+	blobGuiGroup->add(threshold.set("Threshold", false));
 	blobGuiGroup->add(filteringRounds.set("FilteringRounds", 1, 0, 3));
 	blobGuiGroup->add(blobAreaMax.set("AreaMax", 5, 0, 255));
 	blobGuiGroup->add(blobAreaMin.set("AreaMin", 10, 0, 255));
@@ -209,6 +210,8 @@ void BlobFinder::loadMask() {
 
 void BlobFinder::filterTrailingPixels() {
 	filteredImage = grayImage;
+
+	if (threshold.get()) filteredImage.threshold(0);
 
 	filteredImage.dilate_3x3();
 	for (int i = 0; i <= filteringRounds.get(); i++) {
