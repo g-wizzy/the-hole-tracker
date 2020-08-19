@@ -278,7 +278,7 @@ void ofApp::update()
 	ofBackground(100, 100, 100);
 
 #ifdef BLOB
-	if(realSense->update(ofxRealSenseTwo::PointCloud::VIDEO))
+	if(realSense->update(ofxRealSenseTwo::PointCloud::DEPTH))
 	{
 		if (maskUpdatesCounter < MASK_UPDATE_CYCLES)
 		{
@@ -348,10 +348,21 @@ void ofApp::draw() {
 
     if(bShowVisuals){
 
+#ifdef BLOB
+		if (bDisplayBlobTrackerVision) {
+			tracker.filteredImage.draw(viewMain);
+		} else {
+			previewCam.begin(viewMain);
+			mainGrid.drawPlane(5., 5, false);
+			drawPreview();
+			previewCam.end();
+		}
+#else
 		previewCam.begin(viewMain);
 		mainGrid.drawPlane(5., 5, false);
 		drawPreview();
 		previewCam.end();
+#endif
 
         glDisable(GL_DEPTH_TEST);
         ofPushStyle();
@@ -450,11 +461,12 @@ void ofApp::exit() {
 void ofApp::createHelp(){
 	stringstream helpStream;
     helpStream << "press v -> to show visualizations\n";
-	helpStream << "press 1 - 3 -> to change the viewport\n";
-	helpStream << "press p -> to show pointcloud\n";
+#ifdef BLOB
+	helpStream << "press p -> to show filtered capture space\n";
+#endif
 	helpStream << "\n";
     helpStream << "press h -> to show help \n";
-	helpStream << "press l -> to load last saved settings\n";
+	helpStream << "press l -> to load settings\n";
 
 	help = helpStream.str();
 }
@@ -466,7 +478,7 @@ void ofApp::keyPressed(int key){
 			break;
 			
 		case 'p':
-			bPreviewPointCloud = !bPreviewPointCloud;
+			bDisplayBlobTrackerVision = !bDisplayBlobTrackerVision;
             break;
             
 		case 'v':
