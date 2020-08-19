@@ -129,13 +129,13 @@ public:
 
     bool dispRaw;
 
-    bool bPreviewPointCloud = false;
-        
     CaptureMeshArray capMesh;
 	
     void drawPreview();
 
 #ifdef BLOB
+    bool bPreviewPointCloud = false;
+
     void drawCapturePointCloud(bool mask);
 #endif
        
