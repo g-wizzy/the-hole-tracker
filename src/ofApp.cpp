@@ -416,7 +416,7 @@ void ofApp::drawCapturePointCloud(bool _mask) {
 
 	if (_mask) {
 		shader.setUniform1i("mask", 1);
-		glPointSize(6 * 4);
+		glPointSize(2);
 	}
 	else {
 		shader.setUniform1i("mask", 0);
