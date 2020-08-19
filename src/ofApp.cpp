@@ -476,11 +476,13 @@ void ofApp::keyPressed(int key){
 	switch (key) {
 		case ' ':
 			break;
-			
+
+#ifdef BLOB
 		case 'p':
 			bDisplayBlobTrackerVision = !bDisplayBlobTrackerVision;
             break;
-            
+#endif
+
 		case 'v':
 			bShowVisuals = !bShowVisuals;
             break;
