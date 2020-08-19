@@ -19,6 +19,9 @@ BlobTracker::BlobTracker(int _ID, int _liveSpan, ofRectangle _rect, glm::vec3 _h
 	update(_rect, _headBlobCenter, _headBlobSize, _headTop, 0);
 }
 
+BlobTracker::BlobTracker() :
+	BlobTracker(0, 0, ofRectangle(), glm::vec3(), glm::vec2(), glm::vec3()) {}
+
 void BlobTracker::updatePrepare()
 {
 	mHasBeenUpdated = false;
