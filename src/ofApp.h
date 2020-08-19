@@ -134,7 +134,7 @@ public:
     void drawPreview();
 
 #ifdef BLOB
-    bool bPreviewPointCloud = false;
+    bool bDisplayBlobTrackerVision = false;
 
     void drawCapturePointCloud(bool mask);
 #endif
