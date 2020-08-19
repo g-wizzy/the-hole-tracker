@@ -9,7 +9,6 @@
 #include "TrackingNetworkManager.h"
 #include "Frustum.h"
 #include "CaptureMeshArray.h"
-#include "PointCloudManager.h"
 #include <ofMatrix4x4.h>
 
 #include "DetectionMethod.h"
@@ -21,6 +20,7 @@
     #include "ofxNuitrack.h"
     #include <nuitrack/Nuitrack.h>
     #include "SkeletonFinder.h"
+    #include "PointCloudManager.h"
 #endif
 
 #include <boost/filesystem/operations.hpp>

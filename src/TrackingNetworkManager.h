@@ -48,6 +48,8 @@ public:
     void update(const BodyFinder& bodyFinder);
     void sendTrackingData(const BodyFinder& bodyFinder);
     void sendMultipleBodiesAlert();
+    void sendNoBodyFound();
+    void sendBody(string address, glm::vec3 position, float confidence);
 
 #ifdef BLOB
     void sendBlobData(const BlobTracker& blob);

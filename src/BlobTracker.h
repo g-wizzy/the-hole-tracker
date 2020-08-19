@@ -22,7 +22,8 @@ class BlobTracker {
     
 public:
     BlobTracker(int _ID, int _liveSpan, ofRectangle _rect, glm::vec3 _headBlobCenter, glm::vec2 _headBlobSize, glm::vec3 _headTop);
-    
+    BlobTracker();
+
 	// returns true if the event is alive
 	bool isActive();
 

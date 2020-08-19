@@ -90,7 +90,7 @@ void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
 	}
     
 	//this is purely workaround for a mysterious OSCpack bug on 64bit linux
-	// after startup, reinit the receivers
+	// after startup, reinit the receivers@
 	// must be a timing problem, though - in debug, stepping through, it works.
 	if(ofGetFrameNum() == 60){
 		serverReceiver.setup(NETWORK_LISTENING_PORT);
@@ -98,6 +98,8 @@ void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
 }
 
 void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
+
+// TODO: send nothing as well
 
 #ifdef BLOB
     vector<BlobTracker> blobs = bodyFinder.blobEvents;
@@ -113,6 +115,8 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 			return;
 		}
 		sendBlobData(activeBlobs[0]);
+	} else {
+		sendNoBodyFound();
 	}
 #else
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
@@ -125,6 +129,8 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 			return;
 		}
 		sendSkeletonData(skeletons[0]);
+	} else {
+		sendNoBodyFound();
 	}
 #endif
 }
@@ -132,11 +138,37 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 /**
  * Send a special message via OSC to signal multiple bodies
  */
-void TrackingNetworkManager::sendMultipleBodiesAlert()
-{
+void TrackingNetworkManager::sendMultipleBodiesAlert() {
 	ofxOscMessage alertMsg;
 	alertMsg.setAddress("/ks/server/track/multiple-bodies");
 	sendMessageToTrackingClients(alertMsg);
+}
+
+void TrackingNetworkManager::sendNoBodyFound() {
+
+#ifdef BLOB
+	string address = "/ks/server/track/headblob";
+#else
+	string address = "/ks/server/track/skeleton";
+#endif
+
+	sendBody(address, glm::vec3(), -1.0f);
+}
+
+void TrackingNetworkManager::sendBody(string address, glm::vec3 position, float confidence) {
+	ofxOscMessage message;
+	message.setAddress(address);
+
+	message.addIntArg(mServerID.get());
+
+	message.addFloatArg(position.x);
+	message.addFloatArg(position.y);
+	message.addFloatArg(position.z);
+
+	message.addFloatArg(confidence);
+
+	sendMessageToTrackingClients(message);
+
 }
 
 #ifdef BLOB
@@ -146,16 +178,7 @@ void TrackingNetworkManager::sendMultipleBodiesAlert()
  */
 void TrackingNetworkManager::sendBlobData(const BlobTracker& blob)
 {
-	ofxOscMessage blobMsg;
-	blobMsg.setAddress("/ks/server/track/headblob");
-
-	blobMsg.addIntArg(mServerID.get());
-
-	blobMsg.addFloatArg(blob.headBlobCenter.x);
-	blobMsg.addFloatArg(blob.headBlobCenter.y);
-	blobMsg.addFloatArg(blob.headBlobCenter.z);
-
-	sendMessageToTrackingClients(blobMsg);
+	sendBody("/ks/server/track/headblob", blob.headBlobCenter, 1.0f);
 }
 #else
 /**
@@ -163,18 +186,8 @@ void TrackingNetworkManager::sendBlobData(const BlobTracker& blob)
  */
 void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel)
 {
-	ofxOscMessage skeletonMsg;
-	skeletonMsg.setAddress("/ks/server/track/skeleton");
-
-	skeletonMsg.addIntArg(mServerID.get());
-
 	Joint head = skel.joints[nuitrack::JOINT_HEAD];
-	skeletonMsg.addFloatArg(head.pos.x);
-	skeletonMsg.addFloatArg(head.pos.y);
-	skeletonMsg.addFloatArg(head.pos.z);
-	skeletonMsg.addFloatArg(head.confidence);
-
-	sendMessageToTrackingClients(skeletonMsg);
+	sendBody("/ks/server/track/skeleton", head.pos, head.confidence);
 }
 #endif
 
