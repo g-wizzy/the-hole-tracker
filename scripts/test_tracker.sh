@@ -19,6 +19,9 @@ function run_tracker {
     if [ "$MODEL" = "D435" ]; then
         $DIR/../the-hole-blob-tracker
     elif [ "$MODEL" = "D415" ]; then
+        # Since Nuitrack was installed by encor, this script should be run through
+        # sudo -u encor -- ./test_tracker.sh
+        export LD_LIBRARY_PATH="/usr/local/lib/nuitrack"
         $DIR/../the-hole-skeleton-tracker
     else
         echo "No RealSense camera detected. Exiting ..."
