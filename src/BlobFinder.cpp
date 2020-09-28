@@ -160,7 +160,14 @@ void BlobFinder::captureBegin(){
     ofClear(0, 0, 0, 0);
     captureCam.scale = 1;
     // FBO capturing
-    captureCam.begin(ofRectangle(0, 0, captureScreenSize.x, captureScreenSize.y), sensorBoxLeft.get() * SCALE, sensorBoxRight.get() * SCALE, sensorBoxBack.get() * SCALE, sensorBoxFront.get() * SCALE, - sensorBoxTop.get() * SCALE, sensorBoxTop.get() * SCALE);
+    captureCam.begin(
+		ofRectangle(0, 0, captureScreenSize.x, captureScreenSize.y),
+		sensorBoxLeft.get() * SCALE,
+		sensorBoxRight.get() * SCALE,
+		sensorBoxBack.get() * SCALE,
+		sensorBoxFront.get() * SCALE,
+		- sensorBoxBottom.get() * SCALE,
+		- sensorBoxTop.get() * SCALE);
     
 }
 
