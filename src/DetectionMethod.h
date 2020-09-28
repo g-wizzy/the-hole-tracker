@@ -1,3 +1,5 @@
 // Comment or uncomment this line to change the detection method used
 
-#define BLOB
+//#define BLOB
+//#define NUITRACK
+#define CUBEMOS
