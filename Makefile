@@ -4,6 +4,8 @@ ifneq ($(wildcard config.make),)
 	include config.make
 endif
 
+CFLAGS += -I/opt/cubemos/skeleton_tracking/include/
+
 # make sure the the OF_ROOT location is defined
 ifndef OF_ROOT
 	OF_ROOT=$(realpath ../../../Applications/OF)
