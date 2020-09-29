@@ -116,7 +116,7 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 	} else {
 		sendNoBodyFound();
 	}
-#else
+#elif defined NUITRACK
 	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
 	if (skeletons.size() > 0)
 	{
@@ -130,6 +130,17 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 	} else {
 		sendNoBodyFound();
 	}
+#elif defined CUBEMOS
+	const CM_Skeleton* skeleton = nullptr;
+	if (bodyFinder.getSkeleton(&skeleton))
+	{
+		sendSkeletonData(*skeleton);
+	}
+	else
+	{
+		sendNoBodyFound();
+	}
+	
 #endif
 }
 
@@ -183,7 +194,7 @@ void TrackingNetworkManager::sendBlobData(const BlobTracker& blob)
 {
 	sendBody("/ks/server/track/headblob", blob.headBlobCenter, 1.0f);
 }
-#else
+#elif defined NUITRACK
 /**
  * Send a given skeleton via OSC
  */
@@ -191,6 +202,15 @@ void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel)
 {
 	Joint head = skel.joints[nuitrack::JOINT_HEAD];
 	sendBody("/ks/server/track/skeleton", head.pos, head.confidence);
+}
+#elif defined CUBEMOS
+/**
+ * Send a given (cubemos) skeleton via OSC
+ */
+void TrackingNetworkManager::sendSkeletonData(const CM_Skeleton& skel)
+{
+	Keypoint head = skel.keypoints[HEAD_INDEX];
+	sendBody("/ks/server/track/skeleton", head.position, head.confidence);
 }
 #endif
 

@@ -17,8 +17,10 @@
 #ifdef BLOB
     #include "BlobFinder.h"
     #include "BlobTracker.h"
-#else
+#elif defined NUITRACK
     #include "SkeletonFinder.h"
+#elif defined CUBEMOS
+    #include "CubemosTracker.h"
 #endif
 
 #include <cmath>
@@ -36,8 +38,10 @@
 
 #ifdef BLOB
     typedef BlobFinder BodyFinder;
-#else
+#elif defined NUITRACK
     typedef SkeletonFinder BodyFinder;
+#elif defined CUBEMOS
+    typedef CubemosTracker BodyFinder;
 #endif
 
 class TrackingNetworkManager {
@@ -53,8 +57,10 @@ public:
 
 #ifdef BLOB
     void sendBlobData(const BlobTracker& blob);
-#else
+#elif defined NUITRACK
     void sendSkeletonData(const Skeleton& skeleton);
+#elif defined CUBEMOS
+    void sendSkeletonData(const CM_Skeleton& skeleton);
 #endif
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);
