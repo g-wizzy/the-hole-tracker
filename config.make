@@ -37,7 +37,7 @@
 #
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
-# PROJECT_EXTERNAL_SOURCE_PATHS = 
+PROJECT_EXTERNAL_SOURCE_PATHS = /opt/cubemos/skeleton_tracking/include
 
 ################################################################################
 # PROJECT EXCLUSIONS
@@ -76,7 +76,7 @@
 # add a runtime path to search for those shared libraries, since they aren't 
 # incorporated directly into the final executable application binary.
 ################################################################################
-# PROJECT_LDFLAGS=-Wl,-rpath=./libs
+PROJECT_LDFLAGS=-Wl,-rpath=./libs -L/opt/cubemos/skeleton_tracking/lib/ -lcubemos_base -lcubemos_engine -lcubemos_skeleton_tracking
 
 ################################################################################
 # PROJECT DEFINES
