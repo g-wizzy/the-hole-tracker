@@ -16,11 +16,15 @@
     #include "ofxRealSenseTwo.h"
     #include <librealsense2/rs.h>
     #include "BlobFinder.h"
-#else
+#elif defined NUITRACK
     #include "ofxNuitrack.h"
     #include <nuitrack/Nuitrack.h>
     #include "SkeletonFinder.h"
     #include "PointCloudManager.h"
+#elif defined CUBEMOS
+    #include "ofxRealSenseTwo.h"
+    #include <librealsense2/rs.h>
+    #include "CubemosTracker.h"
 #endif
 
 #include <boost/filesystem/operations.hpp>
@@ -41,10 +45,10 @@
 #define N_MEASURMENT_CYCLES 10
 
 using namespace std;
-#ifdef BLOB
-    using namespace ofxRealSenseTwo;
-#else
+#ifdef NUITRACK
     using namespace ofxnui;
+#else
+    using namespace ofxRealSenseTwo;
 #endif
 
 //helpfull links during development:
@@ -115,13 +119,22 @@ public:
     BlobFinder tracker;
     int maskUpdatesCounter = 0;
 
-#else
+#elif defined NUITRACK
 
     void initNuitrack();
     TrackerRef nuitracker;
     PointCloudManager pointCloudManager;
     
     SkeletonFinder tracker;
+
+#elif defined CUBEMOS
+    
+    RSDevicePtr realSense;
+    void createGUIDeviceParams();
+    void createGUIPostProcessingParams();
+    
+    void initCubemos();
+    CubemosTracker tracker;
 
 #endif
 

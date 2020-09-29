@@ -13,7 +13,7 @@
 #define DEPTH_X_RES 640
 #define DEPTH_Y_RES 480
 
-#ifndef BLOB
+#ifdef NUITRACK
 
 /**
  * Create the constant nuitrack -> realsense transformation matrix
@@ -150,11 +150,11 @@ void ofApp::reloadTransformMatrix()
 {
 	guitransform->loadFromFile("transformation.xml");
 
-#ifdef BLOB
-	deviceToWorldTransform = transformation.get();
-#else
+#ifdef NUITRACK
 	// ofMatrices multiplication works in reverse
 	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
+#else
+	deviceToWorldTransform = transformation.get();
 #endif
 }
 
@@ -170,7 +170,9 @@ void ofApp::setup()
 	}
 
 	ofLog(OF_LOG_NOTICE) << "MainAPP: looking for RealSense Device...";
+#endif
 
+#ifndef NUITRACK
 	realSense = RSDevice::createUniquePtr();
 	realSense->checkConnectedDialog();
 	realSense->setVideoSize(REALSENSE_VIDEO_WIDTH, REALSENSE_VIDEO_HEIGHT);
@@ -197,8 +199,14 @@ void ofApp::setup()
 		createGUIDeviceParams();
 		createGUIPostProcessingParams();
 	}
-#else
+#elif defined NUITRACK
 	nuitracker->run();
+#elif defined CUBEMOS
+	if (realSense->capture())
+	{
+		createGUIDeviceParams();
+		createGUIPostProcessingParams();
+	}
 #endif
     
 	ofLog(OF_LOG_NOTICE) << "MainAPP: setting up networking...";
@@ -216,7 +224,7 @@ void ofApp::setupViewports(){
 	tracker.panel->setWidth(MENU_WIDTH / 2);
 	tracker.panel->setPosition(ofGetWidth() - MENU_WIDTH, 20);
 
-#ifdef BLOB
+#ifndef NUITRACK
 	post->setWidth(MENU_WIDTH / 2);
 	post->setPosition(ofGetWidth() - MENU_WIDTH / 2, 20);
 	device->setWidth(MENU_WIDTH / 2);
@@ -224,7 +232,7 @@ void ofApp::setupViewports(){
 #endif
 }
 
-#ifdef BLOB
+#ifndef NUITRACK
 void ofApp::createGUIDeviceParams() {
 	device = gui.addPanel();
 
@@ -303,8 +311,20 @@ void ofApp::update()
 			tracker.update();
 		}
 	}
-#else
+#elif defined NUITRACK
 	nuitracker->poll();
+#elif defined CUBEMOS
+	if (realSense->update(ofxRealSenseTwo::PointCloud::DEPTH))
+	{
+		tracker.onDepthData(realSense->getDepthFrame());
+	}
+	else if (realSense->update(ofxRealSenseTwo::PointCloud::VIDEO))
+	{
+		tracker.onVideoData(
+			realSense->getVideoFrame(),
+			realSense,
+			deviceToWorldTransform);
+	}
 #endif
 
 	networkMng.update(tracker);
@@ -323,6 +343,9 @@ void ofApp::saveSettings()
 	tracker.saveMask();
 	post->saveToFile("postprocessing.xml");
 	device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
+#elif defined CUBEMOS
+	post->saveToFile("postprocessing.xml");
+	device->saveToFile(realSense->getSerialNumber(-1) + ".xml");
 #endif
 }
 
@@ -337,6 +360,10 @@ void ofApp::loadSettings()
 	reloadTransformMatrix();
 #ifdef BLOB
 	tracker.loadMask();
+	post->loadFromFile("postprocessing.xml");
+	// This seems to make the app crash on Linux
+	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
+#elif defined CUBEMOS
 	post->loadFromFile("postprocessing.xml");
 	// This seems to make the app crash on Linux
 	//device->loadFromFile(realSense->getSerialNumber(-1) + ".xml");
@@ -388,10 +415,11 @@ void ofApp::drawPreview() {
 	ofPushMatrix();
 
 	ofMultMatrix(deviceToWorldTransform);
-#ifdef BLOB
-	realSense->draw();
-#else
+
+#ifdef NUITRACK
 	pointCloudManager.drawPointCloud();
+#else
+	realSense->draw();
 #endif
 
 	ofPopMatrix();
