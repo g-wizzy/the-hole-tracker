@@ -99,8 +99,6 @@ void TrackingNetworkManager::update(const BodyFinder& bodyFinder){
 
 void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 
-// TODO: send nothing as well
-
 #ifdef BLOB
     vector<BlobTracker> blobs = bodyFinder.blobEvents;
 	vector<BlobTracker> activeBlobs;
@@ -138,6 +136,11 @@ void TrackingNetworkManager::sendMultipleBodiesAlert() {
 	sendMessageToTrackingClients(alertMsg);
 }
 
+/**
+ * Send a dummy position with negative confidence to indicate
+ * that no body is currently detected, but still give a tick
+ * to the Unreal part of the project
+ */
 void TrackingNetworkManager::sendNoBodyFound() {
 
 #ifdef BLOB
