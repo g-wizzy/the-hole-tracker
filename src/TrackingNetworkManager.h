@@ -54,7 +54,7 @@ public:
 #ifdef BLOB
     void sendBlobData(const BlobTracker& blob);
 #else
-    void sendSkeletonData(const Skeleton& skeleton);
+    void sendSkeletonData(const glm::vec3&);
 #endif
 
     void sendMessageToTrackingClients(ofxOscMessage _msg);

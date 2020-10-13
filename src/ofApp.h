@@ -13,14 +13,14 @@
 
 #include "DetectionMethod.h"
 #ifdef BLOB
-    #include "ofxRealSenseTwo.h"
-    #include <librealsense2/rs.h>
-    #include "BlobFinder.h"
+    //#include "ofxRealSenseTwo.h"
+    //#include <librealsense2/rs.h>
+    //#include "BlobFinder.h"
 #else
     #include "ofxNuitrack.h"
     #include <nuitrack/Nuitrack.h>
     #include "SkeletonFinder.h"
-    #include "PointCloudManager.h"
+    //#include "PointCloudManager.h"
 #endif
 
 #include <boost/filesystem/operations.hpp>
@@ -119,7 +119,7 @@ public:
 
     void initNuitrack();
     TrackerRef nuitracker;
-    PointCloudManager pointCloudManager;
+    //PointCloudManager pointCloudManager;
     
     SkeletonFinder tracker;
 
@@ -142,7 +142,9 @@ public:
     // used for viewing the point cloud
     ofEasyCam previewCam;
             
+    void generateDeviceToWorldTransform();
     ofMatrix4x4 deviceToWorldTransform;
+    ofVboMesh geometry;
 
     //////////////
     //PROPERTIES//
@@ -182,6 +184,6 @@ public:
 #ifndef BLOB
 private:
     const static ofMatrix4x4 nuitrackViewportToRealSenseViewportTransform;
-    static ofMatrix4x4 makeNuitrackToRealSenseTransform();
+    static ofMatrix4x4 computeNuitrackToRealSenseTransform();
 #endif
 };

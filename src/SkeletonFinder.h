@@ -38,6 +38,8 @@ struct Skeleton {
     int id;
     vector<Joint> joints;
 
+    bool isValid() const;
+
     Skeleton(int id, vector<Joint> joints) :
         id(id), joints(joints) {}
 };
@@ -57,6 +59,10 @@ struct Bone {
 class SkeletonFinder {
     
 public:
+    SkeletonFinder()
+        : skeleton(Skeleton(-1, vector<Joint>()))
+        {}
+
     void initGUI(ofxGui& gui);
     void setTransformMatrix(ofMatrix4x4* mat);
     void update(nuitrack::SkeletonData::Ptr data);
@@ -64,14 +70,18 @@ public:
     void drawSensorBox();
     void drawSkeletons();
 
-    vector<Skeleton> getSkeletons() const;
+    bool getSkeletonHead(glm::vec3& position) const;
     
 private:
     void updateSensorBox(int & value);
     bool isSkeletonInBounds(const Skeleton& skel);
 
+    float currentDistanceFactor = 1.0f;
+    float maxDistanceFactor = 5e4;
+    float distanceGrowth = 1.01f;
+
     ofxnui::TrackerRef tracker;
-    vector<Skeleton> skeletons;
+    Skeleton skeleton;
 
     ofMatrix4x4* transformMatrix;
 

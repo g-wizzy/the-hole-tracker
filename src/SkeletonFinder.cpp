@@ -7,11 +7,19 @@
 
 #include "SkeletonFinder.h"
 
+bool Skeleton::isValid() const
+{
+	return id >= 0;
+}
+
+
 /**
  * Creates and populates the GUI elements
  */
 void SkeletonFinder::initGUI(ofxGui& gui)
 {
+	skeleton.id = -1;
+
 	panel = gui.addPanel();
 
 	panel->loadTheme("theme/theme_light.json");
@@ -53,35 +61,52 @@ void SkeletonFinder::setTransformMatrix(ofMatrix4x4* mat)
  */
 void SkeletonFinder::update(nuitrack::SkeletonData::Ptr data)
 {
-	skeletons.clear();
-	// TODO: filter using the capture bounds
-	for (nuitrack::Skeleton skel : data->getSkeletons())
+	currentDistanceFactor *= distanceGrowth;
+	if (currentDistanceFactor > maxDistanceFactor)
 	{
-		vector<Joint> joints;
-		for (nuitrack::Joint joint : skel.joints)
-		{
-			glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
-
-			// ofMatrix multiplication works in reverse
-			pos = (ofVec3f)pos * *transformMatrix;
-
-			joints.push_back(Joint(joint.type, joint.confidence, pos));
-		}
-
-		Skeleton skeleton(skel.id, joints);
-		if (!filtering.get() || isSkeletonInBounds(skeleton))
-		{
-			skeletons.push_back(skeleton);
-		}
+		currentDistanceFactor = 1.0f;
 	}
-}
 
-/**
- * Getter for the skeletons container
- */
-vector<Skeleton> SkeletonFinder::getSkeletons() const
-{
-	return skeletons;
+	if (data->getNumSkeletons() > 0)
+	{
+		vector<nuitrack::Skeleton> skels = data->getSkeletons();
+		int id = skeleton.id;
+		const nuitrack::Skeleton* skel = nullptr;
+		if (id < 0)
+		{
+			// Currently no active skeleton => we take the first one of the vector
+			skel = &(skels[0]);
+			id = skel->id;
+		}
+		else
+		{
+			for (const nuitrack::Skeleton& skel_iter : skels)
+			{
+				if (skel_iter.id == id)
+				{
+					skel = &skel_iter;
+				}
+			}
+		}
+		
+		if (skel == nullptr)
+		{
+			// Our current skeleton has disappeared
+			id = -1;
+		}
+		else
+		{
+			skeleton.joints.clear();
+			for (auto joint : skel->joints)
+			{
+				glm::vec3 pos = ofxnui::Tracker::fromVector3(joint.real);
+
+				skeleton.joints.push_back(Joint(joint.type, joint.confidence, pos));
+			}
+		}
+
+		skeleton.id = id;
+	}
 }
 
 /**
@@ -123,13 +148,13 @@ void SkeletonFinder::drawSkeletons()
 		Bone(nuitrack::JOINT_RIGHT_KNEE, nuitrack::JOINT_RIGHT_ANKLE, glm::vec3(0, -1, 0)),
 	};
 
-	ofSetColor(0, 255, 0);
-	for (Skeleton skel : skeletons)
+	if (skeleton.isValid())
 	{
+		ofSetColor(0, 255, 0);
 		for (Bone bone : bones)
 		{
-			auto j1 = skel.joints[bone.from];
-			auto j2 = skel.joints[bone.to];
+			auto j1 = skeleton.joints[bone.from];
+			auto j2 = skeleton.joints[bone.to];
 
 			if (j1.confidence < 0.15 || j2.confidence < 0.15) {
 				continue;
@@ -137,6 +162,21 @@ void SkeletonFinder::drawSkeletons()
 
 			ofDrawLine(j1.pos, j2.pos);
 		}
+	}
+}
+
+bool SkeletonFinder::getSkeletonHead(glm::vec3& pos) const
+{
+	if (skeleton.isValid())
+	{
+		pos = skeleton.joints[nuitrack::JOINT_HEAD].pos;
+		pos = (ofVec3f)pos * (*transformMatrix) * currentDistanceFactor;
+		
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 }
 

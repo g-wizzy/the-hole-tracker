@@ -18,7 +18,7 @@
 /**
  * Create the constant nuitrack -> realsense transformation matrix
  */
-ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform()
+ofMatrix4x4 ofApp::computeNuitrackToRealSenseTransform()
 {
 	// Thankfully this matrix is symmetric, so we need not worry about the row-major-ness
 	// of the matrix object
@@ -31,7 +31,62 @@ ofMatrix4x4 ofApp::makeNuitrackToRealSenseTransform()
 	return glm::make_mat4x4(mat);
 }
 
-const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = makeNuitrackToRealSenseTransform();
+const ofMatrix4x4 ofApp::nuitrackViewportToRealSenseViewportTransform = computeNuitrackToRealSenseTransform();
+
+void ofApp::generateDeviceToWorldTransform() {
+
+	// Hard-coded values for the new "portrait screen" mode
+	// Values in millimeters
+	glm::vec3 translate = glm::vec3(
+		0,		// Décalage horizontal avec le centre de l'écran
+		-1050,	// Décalage vertical avec le centre de l'écran (caméra au dessus => valeur négative)
+		50);		// Décalage par rapport avec la surface de l'écran (environ zéro si tout va bien)
+
+	glm::vec3 newXAxis = glm::vec3(-1e+3,	0,	  0);
+	glm::vec3 newYAxis = glm::vec3(	  0, 1e+3,	  0);
+	glm::vec3 newZAxis = glm::vec3(	  0,	0, 1e+3);
+
+	geometry.clear();
+	geometry.setMode(OF_PRIMITIVE_LINES);
+
+	geometry.addColor(ofColor::red);
+	geometry.addVertex(translate);
+	geometry.addColor(ofColor::red);
+	geometry.addVertex(translate + newXAxis);
+
+	geometry.addColor(ofColor::green);
+	geometry.addVertex(translate);
+	geometry.addColor(ofColor::green);
+	geometry.addVertex(translate + newYAxis);
+
+	geometry.addColor(ofColor::blue);
+	geometry.addVertex(translate);
+	geometry.addColor(ofColor::blue);
+	geometry.addVertex(translate + newZAxis);
+
+	float mat[16] = {
+		newXAxis.x,
+		newXAxis.y,
+		newXAxis.z,
+		0,
+		newYAxis.x,
+		newYAxis.y,
+		newYAxis.z,
+		0,
+		newZAxis.x,
+		newZAxis.y,
+		newZAxis.z,
+		0,
+		translate.x,
+		translate.y,
+		translate.z,
+		1
+	};
+
+	// and what we need at the end is the inverse of this:
+	deviceToWorldTransform = glm::inverse(glm::make_mat4x4(mat));
+	transformation.set(deviceToWorldTransform);
+}
 
 /**
  * Set up Nuitrack's config and callbacks 
@@ -77,18 +132,18 @@ void ofApp::initNuitrack()
 			}
 		}
 	);
-	nuitracker->setRGBCallback(
-		[this](nuitrack::RGBFrame::Ptr data)
-		{
-			pointCloudManager.updateRGB(data);
-		}
-	);
-	nuitracker->setDepthCallback(
-		[this](nuitrack::DepthFrame::Ptr data)
-		{
-			pointCloudManager.updateDepth(data);
-		}
-	);
+	//nuitracker->setRGBCallback(
+	//	[this](nuitrack::RGBFrame::Ptr data)
+	//	{
+	//		pointCloudManager.updateRGB(data);
+	//	}
+	//);
+	//nuitracker->setDepthCallback(
+	//	[this](nuitrack::DepthFrame::Ptr data)
+	//	{
+	//		pointCloudManager.updateDepth(data);
+	//	}
+	//);
 	nuitracker->setSkeletonCallback(
 		[this](nuitrack::SkeletonData::Ptr data)
 		{
@@ -96,7 +151,7 @@ void ofApp::initNuitrack()
 		}
 	);
 
-	pointCloudManager.setDepthSensor(nuitracker->depthTracker);
+	//pointCloudManager.setDepthSensor(nuitracker->depthTracker);
 }
 
 #endif
@@ -148,18 +203,20 @@ void ofApp::setupTransformGui() {
  */
 void ofApp::reloadTransformMatrix()
 {
-	guitransform->loadFromFile("transformation.xml");
+	//guitransform->loadFromFile("transformation.xml");
 
 #ifdef BLOB
 	deviceToWorldTransform = transformation.get();
 #else
 	// ofMatrices multiplication works in reverse
-	deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
+	//deviceToWorldTransform = nuitrackViewportToRealSenseViewportTransform * transformation.get();
 #endif
 }
 
 void ofApp::setup()
 {
+
+generateDeviceToWorldTransform();
 
 #ifdef BLOB
 	if (ofIsGLProgrammableRenderer()) {
@@ -391,7 +448,9 @@ void ofApp::drawPreview() {
 #ifdef BLOB
 	realSense->draw();
 #else
-	pointCloudManager.drawPointCloud();
+	//pointCloudManager.drawPointCloud();
+	geometry.draw();
+	tracker.drawSkeletons();
 #endif
 
 	ofPopMatrix();
@@ -408,7 +467,7 @@ void ofApp::drawPreview() {
     tracker.drawBodyBlobsHeadTop();
 #else
 	ofPopMatrix();
-	tracker.drawSkeletons();
+	//tracker.drawSkeletons();
 #endif
 
 	ofPopStyle();

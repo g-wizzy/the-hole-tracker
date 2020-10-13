@@ -1,6 +1,5 @@
-ofxOsc
-ofxNuitrack
-ofxRealSenseTwo
-ofxOpenCv
 ofxGuiExtended
 ofxNetwork
+ofxNuitrack
+ofxOpenCv
+ofxOsc

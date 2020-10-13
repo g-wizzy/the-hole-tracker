@@ -119,16 +119,10 @@ void TrackingNetworkManager::sendTrackingData(const BodyFinder& bodyFinder) {
 		sendNoBodyFound();
 	}
 #else
-	vector<Skeleton> skeletons = bodyFinder.getSkeletons();
-	if (skeletons.size() > 0)
+	glm::vec3 pos;
+	if (bodyFinder.getSkeletonHead(pos))
 	{
-		// Only one skeleton is to be on the scene for the perspective to work
-		if (skeletons.size() > 1)
-		{
-			sendMultipleBodiesAlert();
-			return;
-		}
-		sendSkeletonData(skeletons[0]);
+		sendSkeletonData(pos);
 	} else {
 		sendNoBodyFound();
 	}
@@ -184,10 +178,9 @@ void TrackingNetworkManager::sendBlobData(const BlobTracker& blob)
 /**
  * Send a given skeleton via OSC
  */
-void TrackingNetworkManager::sendSkeletonData(const Skeleton& skel)
+void TrackingNetworkManager::sendSkeletonData(const glm::vec3& pos)
 {
-	Joint head = skel.joints[nuitrack::JOINT_HEAD];
-	sendBody("/ks/server/track/skeleton", head.pos, head.confidence);
+	sendBody("/ks/server/track/skeleton", pos, 1.0f);
 }
 #endif
 
